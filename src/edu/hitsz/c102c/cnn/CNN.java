@@ -1,6 +1,7 @@
 package edu.hitsz.c102c.cnn;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -9,17 +10,29 @@ import edu.hitsz.c102c.data.Dataset;
 import edu.hitsz.c102c.data.Dataset.Record;
 import edu.hitsz.c102c.util.ConcurenceRunner;
 import edu.hitsz.c102c.util.ConcurenceRunner.Task;
-import edu.hitsz.c102c.util.TimedTest;
-import edu.hitsz.c102c.util.TimedTest.TestTask;
+import edu.hitsz.c102c.util.Log;
 import edu.hitsz.c102c.util.Util;
+import edu.hitsz.c102c.util.Util.Operator;
 
 public class CNN {
+	private static final double ALPHA = 0.05;
+	protected static final double LAMBDA = 0.01;
 	// 网络的各层
 	private List<Layer> layers;
 	// 层数
 	private int layerNum;
 	// 并行工具
 	private static ConcurenceRunner runner = new ConcurenceRunner();
+	// 批量更新的大小
+	private int batchSize;
+	// 除数操作符，对矩阵的每一个元素除以一个值
+	private Operator divide_batchSize;
+
+	// 乘数操作符，对矩阵的每一个元素乘以alpha值
+	private Operator multiply_alpha;
+
+	// 乘数操作符，对矩阵的每一个元素乘以1-labmda*alpha值
+	private Operator multiply_lambda;
 
 	/**
 	 * 初始化网络
@@ -31,27 +44,108 @@ public class CNN {
 	 * @param classNum
 	 *            类别的个数，要求数据集将类标转化为0-classNum-1的数值
 	 */
-	public CNN(LayerBuilder layerBuilder, int batchSize) {
+	public CNN(LayerBuilder layerBuilder, final int batchSize) {
 		layers = layerBuilder.mLayers;
 		layerNum = layers.size();
+		this.batchSize = batchSize;
 		setup(batchSize);
+		initPerator();
+	}
+
+	/**
+	 * 初始化操作符
+	 */
+	private void initPerator() {
+		divide_batchSize = new Operator() {
+
+			@Override
+			public double process(double value) {
+				return value / batchSize;
+			}
+
+		};
+		multiply_alpha = new Operator() {
+
+			@Override
+			public double process(double value) {
+
+				return value * ALPHA;
+			}
+
+		};
+		multiply_lambda = new Operator() {
+
+			@Override
+			public double process(double value) {
+
+				return value * (1 - LAMBDA * ALPHA);
+			}
+
+		};
 	}
 
 	/**
 	 * 在训练集上训练网络
 	 * 
 	 * @param trainset
+	 * @param repeat
+	 *            迭代的次数
 	 */
-	public void train(Dataset trainset, int batchSize) {
-		int epochsNum = 1 + trainset.size() / batchSize;// 多抽取一次，即向上取整
-		for (int i = 0; i < epochsNum; i++) {
-			int[] randPerm = Util.randomPerm(trainset.size(), batchSize);
-			Layer.prepareForNewBatch();
-			for (int index : randPerm) {
-				train(trainset.getRecord(index));
+	public void train(Dataset trainset, int repeat) {
+		for (int t = 0; t < repeat; t++) {
+			int epochsNum = 1 + trainset.size() / batchSize;// 多抽取一次，即向上取整
+			for (int i = 0; i < epochsNum; i++) {
+				int[] randPerm = Util.randomPerm(trainset.size(), batchSize);
+				Layer.prepareForNewBatch();
+				for (int index : randPerm) {
+					train(trainset.getRecord(index));
+					Layer.prepareForNewRecord();
+				}
+				Layer.prepareForNewBatch();
+				// 跑完一个batch后更新权重
+				updateParas();
+			}
+			double precision = test(trainset);
+			Log.i("precision " + precision);
+		}
+	}
+
+	/**
+	 * 测试数据
+	 * 
+	 * @param trainset
+	 * @return
+	 */
+	private double test(Dataset trainset) {
+		Iterator<Record> iter = trainset.iter();
+		int right = 0;
+		while (iter.hasNext()) {
+			Record record = iter.next();
+			forward(record);
+			Layer outputLayer = layers.get(layerNum - 1);
+			int mapNum = outputLayer.getOutMapNum();
+			double[] target = record.getDoubleEncodeTarget(mapNum);
+			double[] out = new double[mapNum];
+			for (int m = 0; m < mapNum; m++) {
+				double[][] outmap = outputLayer.getMap(m);
+				out[m] = outmap[0][0];
+			}
+			if (isSame(out, target)) {
+				right++;
+			}
+		}
+		return 1.0 * right / trainset.size();
+	}
+
+	private boolean isSame(double[] output, double[] target) {
+		boolean r = true;
+		for (int i = 0; i < output.length; i++)
+			if (Math.abs(output[i] - target[i]) > 0.5) {
+				r = false;
+				break;
 			}
 
-		}
+		return r;
 	}
 
 	private void train(Record record) {
@@ -64,44 +158,20 @@ public class CNN {
 	 */
 	private void backPropagation(Record record) {
 		setOutLayerErrors(record);
-		setHiddenLayerErros();
-
+		setHiddenLayerErrors();
 	}
 
 	/**
-	 * 设置中将各层的残差
+	 * 更新参数
 	 */
-	private void setHiddenLayerErros() {
-		for (int l = layerNum - 2; l > 0; l--) {
+	private void updateParas() {
+		for (int l = 1; l < layerNum; l++) {
 			Layer layer = layers.get(l);
-			int mapNum = layer.getOutMapNum();
-			Layer nextLayer = layers.get(l + 1);
+			Layer lastLayer = layers.get(l - 1);
 			switch (layer.getType()) {
-			case samp:
-
-				break;
 			case conv:
-				// 卷积层的下一层为采样层，即两层的map个数相同，且一个map只与令一层的一个map连接，
-				// 因此只需将下一层的残差kronecker扩展在用点积即可
-				for (int m = 0; m < mapNum; m++) {
-					Size scale = nextLayer.getScaleSize();
-					double[][] nextError = nextLayer.getError(m);
-					double[][] map = layer.getMap(m);
-					// 矩阵相乘，但对第二个矩阵的每个元素value进行1-value操作
-					matrixProduct(map, cloneMatrix(map), null, new Operator() {
-
-						@Override
-						public double process(double value) {
-							return 1 - value;
-						}
-
-					});
-					double[][] outMatrix = matrixProduct(map,
-							kronecker(nextError, scale), null, null);
-
-					layer.setError(m, outMatrix);
-
-				}
+			case output:
+				updateParas(layer, lastLayer);
 				break;
 			default:
 				break;
@@ -110,7 +180,129 @@ public class CNN {
 	}
 
 	/**
-	 * 设置输出层的残差值
+	 * 更新layer层的卷积核（权重）和偏置
+	 * 
+	 * @param layer
+	 *            当前层
+	 * @param lastLayer
+	 *            前一层
+	 */
+	private void updateParas(Layer layer, Layer lastLayer) {
+		int mapNum = layer.getOutMapNum();
+		int lastMapNum = lastLayer.getOutMapNum();
+		for (int j = 0; j < mapNum; j++) {
+			double[][][][] errors = layer.getErrors();
+			double[][] error = Util.sum(errors, j);
+			for (int i = 0; i < lastMapNum; i++) {
+				double[][] kernel = layer.getKernel(i, j);
+				double[][] deltaKernel = Util.convnValid(
+						Util.rot180(lastLayer.getMap(i)), error);
+				// 除以batchSize
+				deltaKernel = Util.matrixOp(deltaKernel, divide_batchSize);
+				// 更新卷积核
+				deltaKernel = Util.matrixOp(kernel, deltaKernel,
+						multiply_lambda, multiply_alpha, Util.minus);
+				layer.setKernel(i, j, deltaKernel);
+			}
+			// 更新偏置
+			double deltaBias = Util.sum(error) / batchSize;
+			double bias = layer.getBias(j) + ALPHA * deltaBias;
+			layer.setBias(j, bias);
+		}
+	}
+
+	/**
+	 * 设置中将各层的残差
+	 */
+	private void setHiddenLayerErrors() {
+		for (int l = layerNum - 2; l > 0; l--) {
+			Layer layer = layers.get(l);
+			Layer nextLayer = layers.get(l + 1);
+			switch (layer.getType()) {
+			case samp:
+				setSampErrors(layer, nextLayer);
+				break;
+			case conv:
+				setConvErrors(layer, nextLayer);
+				break;
+			default:// 只有采样层和卷积层需要处理残差，输入层没有残差，输出层已经处理过
+				break;
+			}
+		}
+	}
+
+	/**
+	 * 设置采样层的残差
+	 * 
+	 * @param layer
+	 * @param nextLayer
+	 */
+	private void setSampErrors(Layer layer, Layer nextLayer) {
+		int mapNum = layer.getOutMapNum();
+		final int nextMapNum = nextLayer.getOutMapNum();
+		for (int i = 0; i < mapNum; i++) {
+			double[][] sum = null;// 对每一个卷积进行求和
+			for (int j = 0; j < nextMapNum; j++) {
+				double[][] nextError = nextLayer.getError(j);
+				double[][] kernel = nextLayer.getKernel(i, j);
+				// 对卷积核进行180度旋转，然后进行full模式下得卷积
+				if (sum == null)
+					sum = Util.convnFull(nextError, Util.rot180(kernel));
+				else
+					sum = Util.matrixOp(
+							Util.convnFull(nextError, Util.rot180(kernel)),
+							sum, null, null, Util.plus);
+			}
+			layer.setMapValue(i, sum);
+		}
+	}
+
+	/**
+	 * 设置卷积层的残差
+	 * 
+	 * @param layer
+	 * @param nextLayer
+	 */
+	private void setConvErrors(final Layer layer, final Layer nextLayer) {
+		// 卷积层的下一层为采样层，即两层的map个数相同，且一个map只与令一层的一个map连接，
+		// 因此只需将下一层的残差kronecker扩展再用点积即可
+		int mapNum = layer.getOutMapNum();
+		int cpuNum = ConcurenceRunner.cpuNum;
+		cpuNum = cpuNum < mapNum ? cpuNum : 1;// 比cpu的个数小一个时，只用一个线程
+		final CountDownLatch gate = new CountDownLatch(cpuNum);
+		int fregLength = (mapNum + cpuNum - 1) / cpuNum;
+		for (int cpu = 0; cpu < cpuNum; cpu++) {
+			int start = cpu * fregLength;
+			int tmp = (cpu + 1) * fregLength;
+			int end = tmp <= mapNum ? tmp : mapNum;
+			Task task = new Task(start, end) {
+
+				@Override
+				public void process(int start, int end) {
+					for (int m = start; m < end; m++) {
+						Size scale = nextLayer.getScaleSize();
+						double[][] nextError = nextLayer.getError(m);
+						double[][] map = layer.getMap(m);
+						// 矩阵相乘，但对第二个矩阵的每个元素value进行1-value操作
+						double[][] outMatrix = Util.matrixOp(map,
+								Util.cloneMatrix(map), null, Util.one_value,
+								Util.multiply);
+						outMatrix = Util.matrixOp(outMatrix,
+								Util.kronecker(nextError, scale), null, null,
+								Util.multiply);
+						layer.setError(m, outMatrix);
+					}
+					gate.countDown();
+				}
+			};
+			runner.run(task);
+		}
+		await(gate);
+
+	}
+
+	/**
+	 * 设置输出层的残差值,输出层的神经单元个数较少，暂不考虑多线程
 	 * 
 	 * @param record
 	 */
@@ -133,48 +325,19 @@ public class CNN {
 	 */
 	private void forward(Record record) {
 		// 设置输入层的map
-		Layer inputLayer = layers.get(0);
-		Size mapSize = inputLayer.getMapSize();
-		double[] attr = record.getAttrs();
-		if (attr.length != mapSize.x * mapSize.y)
-			throw new RuntimeException("数据记录的大小与定义的map大小不一致!");
-		int index = 0;
-		for (int i = 0; i < mapSize.x; i++)
-			for (int j = 0; j < mapSize.y; j++) {
-				double value = attr[index++];
-				inputLayer.setMapValue(0, i, j, value);
-			}
+		setInLayerOutput(record);
 		for (int l = 1; l < layers.size(); l++) {
 			Layer layer = layers.get(l);
 			Layer lastLayer = layers.get(l - 1);
-			int mapNum = layer.getOutMapNum();
-			int lastMapNum = lastLayer.getOutMapNum();
 			switch (layer.getType()) {
 			case conv:// 计算卷积层的输出
-				for (int j = 0; j < mapNum; j++)
-					for (int i = 0; i < lastMapNum; i++) {
-						double[][] lastMap = lastLayer.getMap(i);
-						double[][] kernel = layer.getKernel(i, j);
-						double[][] outMatrix = convnValid(lastMap, kernel);
-						layer.setMapValue(j, outMatrix);
-					}
+				setConvOutput(layer, lastLayer);
 				break;
 			case samp:// 计算采样层的输出
-				for (int i = 0; i < lastMapNum; i++) {
-					double[][] lastMap = lastLayer.getMap(i);
-					Size scaleSize = layer.getScaleSize();
-					double[][] sampMatrix = scaleMatrix(lastMap, scaleSize);
-					layer.setMapValue(i, sampMatrix);
-				}
+				setSampOutput(layer, lastLayer);
 				break;
-			case output:// 计算输出层的输出
-				for (int j = 0; j < mapNum; j++)
-					for (int i = 0; i < lastMapNum; i++) {
-						double[][] lastMap = lastLayer.getMap(i);
-						double[][] kernel = layer.getKernel(i, j);
-						double[][] outMatrix = convnValid(lastMap, kernel);
-						layer.setMapValue(j, outMatrix);
-					}
+			case output:// 计算输出层的输出,输出层是一个特殊的卷积层
+				setConvOutput(layer, lastLayer);
 				break;
 			default:
 				break;
@@ -183,14 +346,141 @@ public class CNN {
 	}
 
 	/**
+	 * 根据记录值，设置输入层的输出值
+	 * 
+	 * @param record
+	 */
+	private void setInLayerOutput(Record record) {
+		final Layer inputLayer = layers.get(0);
+		final Size mapSize = inputLayer.getMapSize();
+		final double[] attr = record.getAttrs();
+		if (attr.length != mapSize.x * mapSize.y)
+			throw new RuntimeException("数据记录的大小与定义的map大小不一致!");
+		int cpuNum = ConcurenceRunner.cpuNum;
+		cpuNum = cpuNum < mapSize.y ? cpuNum : 1;// 比cpu的个数小一个时，只用一个线程
+		final CountDownLatch gate = new CountDownLatch(cpuNum);
+		int fregLength = (mapSize.y + cpuNum - 1) / cpuNum;
+		for (int cpu = 0; cpu < cpuNum; cpu++) {
+			int start = cpu * fregLength;
+			int tmp = (cpu + 1) * fregLength;
+			int end = tmp <= mapSize.y ? tmp : mapSize.y;
+			Task task = new Task(start, end) {
+
+				@Override
+				public void process(int start, int end) {
+					for (int i = 0; i < mapSize.x; i++) {
+						for (int j = start; j < end; j++) {
+							// 将记录属性的一维向量弄成二维矩阵
+							double value = attr[mapSize.x * i + j];
+							inputLayer.setMapValue(0, i, j, value);
+						}
+					}
+					gate.countDown();
+				}
+			};
+			runner.run(task);
+		}
+		await(gate);
+
+	}
+
+	/*
+	 * 计算卷积层输出值,每个线程负责一部分map
+	 */
+	private void setConvOutput(final Layer layer, final Layer lastLayer) {
+		int mapNum = layer.getOutMapNum();
+		final int lastMapNum = lastLayer.getOutMapNum();
+		int cpuNum = ConcurenceRunner.cpuNum;
+		cpuNum = cpuNum < mapNum ? cpuNum : 1;// 比cpu的个数小一个时，只用一个线程
+		final CountDownLatch gate = new CountDownLatch(cpuNum);
+		int fregLength = (mapNum + cpuNum - 1) / cpuNum;
+		for (int cpu = 0; cpu < cpuNum; cpu++) {
+			int start = cpu * fregLength;
+			int tmp = (cpu + 1) * fregLength;
+			int end = tmp <= mapNum ? tmp : mapNum;
+			Task task = new Task(start, end) {
+
+				@Override
+				public void process(int start, int end) {
+					for (int j = start; j < end; j++) {
+						double[][] sum = null;// 对每一个输入map的卷积进行求和
+						for (int i = 0; i < lastMapNum; i++) {
+							double[][] lastMap = lastLayer.getMap(i);
+							double[][] kernel = layer.getKernel(i, j);
+							if (sum == null)
+								sum = Util.convnValid(lastMap, kernel);
+							else
+								sum = Util.matrixOp(
+										Util.convnValid(lastMap, kernel), sum,
+										null, null, Util.plus);
+						}
+						final double bias = layer.getBias(j);
+						sum = Util.matrixOp(sum, new Operator() {
+
+							@Override
+							public double process(double value) {
+								return Util.sigmod(value + bias);
+							}
+
+						});
+						layer.setMapValue(j, sum);
+					}
+					gate.countDown();
+				}
+			};
+			runner.run(task);
+		}
+		await(gate);
+
+	}
+
+	/**
+	 * 设置采样层的输出值，采样层是对卷积层的均值处理
+	 * 
+	 * @param layer
+	 * @param lastLayer
+	 */
+	private void setSampOutput(final Layer layer, final Layer lastLayer) {
+		int lastMapNum = lastLayer.getOutMapNum();
+		int cpuNum = ConcurenceRunner.cpuNum;
+		cpuNum = cpuNum < lastMapNum ? cpuNum : 1;// 比cpu的个数小一个时，只用一个线程
+		final CountDownLatch gate = new CountDownLatch(cpuNum);
+		int fregLength = (lastMapNum + cpuNum - 1) / cpuNum;
+		for (int cpu = 0; cpu < cpuNum; cpu++) {
+			int start = cpu * fregLength;
+			int tmp = (cpu + 1) * fregLength;
+			int end = tmp <= lastMapNum ? tmp : lastMapNum;
+			Task task = new Task(start, end) {
+
+				@Override
+				public void process(int start, int end) {
+					for (int i = start; i < end; i++) {
+						double[][] lastMap = lastLayer.getMap(i);
+						Size scaleSize = layer.getScaleSize();
+						// 按scaleSize区域进行均值处理
+						double[][] sampMatrix = Util.scaleMatrix(lastMap,
+								scaleSize);
+						layer.setMapValue(i, sampMatrix);
+					}
+					gate.countDown();
+				}
+			};
+			runner.run(task);
+		}
+		await(gate);
+	}
+
+	/**
 	 * 设置cnn网络的每一层的参数
 	 * 
 	 * @param batchSize
-	 * 
-	 * @param classNum
+	 *            * @param classNum
 	 * @param inputMapSize
 	 */
 	public void setup(int batchSize) {
+		Layer inputLayer = layers.get(0);
+		// 每一层都需要初始化输出map
+		inputLayer.initOutmaps(batchSize);
 		for (int i = 1; i < layers.size(); i++) {
 			Layer layer = layers.get(i);
 			Layer frontLayer = layers.get(i - 1);
@@ -206,6 +496,10 @@ public class CNN {
 				layer.initKerkel(frontMapNum);
 				// 初始化偏置，共有frontMapNum*outMapNum个偏置
 				layer.initBias(frontMapNum);
+				// batch的每个记录都要保持一份残差
+				layer.initErros(batchSize);
+				// 每一层都需要初始化输出map
+				layer.initOutmaps(batchSize);
 				break;
 			case samp:
 				// 采样层的map数量与上一层相同
@@ -213,16 +507,23 @@ public class CNN {
 				// 采样层map的大小是上一层map的大小除以scale大小
 				layer.setMapSize(frontLayer.getMapSize().divide(
 						layer.getScaleSize()));
+				// batch的每个记录都要保持一份残差
+				layer.initErros(batchSize);
+				// 每一层都需要初始化输出map
+				layer.initOutmaps(batchSize);
 				break;
 			case output:
 				// 初始化权重（卷积核），共有frontMapNum*outMapNum个1*1卷积核
 				layer.initKerkel(frontMapNum);
 				// 初始化偏置，共有frontMapNum*outMapNum个偏置
 				layer.initBias(frontMapNum);
+				// batch的每个记录都要保持一份残差
+				layer.initErros(batchSize);
+				// 每一层都需要初始化输出map
+				layer.initOutmaps(batchSize);
 				break;
 			}
-			// 每一层都需要初始化输出map
-			layer.initOutmaps(batchSize);
+
 		}
 	}
 
@@ -233,7 +534,7 @@ public class CNN {
 	 * 
 	 *         创建时间：2014-7-8 下午4:54:29
 	 */
-	class LayerBuilder {
+	public static class LayerBuilder {
 		private List<Layer> mLayers;
 
 		public LayerBuilder() {
@@ -251,212 +552,12 @@ public class CNN {
 		}
 	}
 
-	public static double[][] cloneMatrix(final double[][] matrix) {
-		final int m = matrix.length;
-		int n = matrix[0].length;
-		final double[][] outMatrix = new double[m][n];
-		int cpuNum = ConcurenceRunner.cpuNum;
-		cpuNum = cpuNum < n ? cpuNum : 1;// 比cpu的个数小时，只用一个线程
-		int fregLength = (n + cpuNum - 1) / cpuNum;// 向上取整
-		final CountDownLatch gate = new CountDownLatch(cpuNum);
-		for (int cpu = 0; cpu < cpuNum; cpu++) {
-			int start = cpu * fregLength;
-			int tmp = (cpu + 1) * fregLength;
-			int end = tmp <= n ? tmp : n;
-			Task task = new Task(start, end) {
-
-				@Override
-				public void process(int start, int end) {
-					for (int i = 0; i < m; i++) {
-						for (int j = start; j < end; j++) {
-							outMatrix[i][j] = matrix[i][j];
-						}
-					}
-					gate.countDown();
-				}
-
-			};
-			runner.run(task);
-		}
-		await(gate);
-		return outMatrix;
-	}
-
-	/**
-	 * 两个维度相同的矩阵对应元素相乘,得到的结果方法mb中，即mb[i][j] =
-	 * ma[i][j]*mb[i][j]
-	 * 
-	 * @param ma
-	 * @param mb
-	 * @param operatorB
-	 *            在第mb矩阵上的操作
-	 * @param operatorA
-	 *            在ma矩阵元素上的操作
-	 * @return
-	 * @deprecated 会对mb矩阵进行修改，请注意
-	 */
-	private static double[][] matrixProduct(final double[][] ma,
-			final double[][] mb, final Operator operatorA,
-			final Operator operatorB) {
-		final int m = ma.length;
-		int n = ma[0].length;
-		if (m != mb.length || n != mb[0].length)
-			throw new RuntimeException("两个矩阵大小不一致");
-		int cpuNum = ConcurenceRunner.cpuNum;
-		cpuNum = cpuNum < n ? cpuNum : 1;// 比cpu的个数小时，只用一个线程
-		int fregLength = (n + cpuNum - 1) / cpuNum;// 向上取整
-		final CountDownLatch gate = new CountDownLatch(cpuNum);
-		for (int cpu = 0; cpu < cpuNum; cpu++) {
-			int start = cpu * fregLength;
-			int tmp = (cpu + 1) * fregLength;
-			int end = tmp <= n ? tmp : n;
-			Task task = new Task(start, end) {
-
-				@Override
-				public void process(int start, int end) {
-					for (int i = 0; i < m; i++) {
-						for (int j = start; j < end; j++) {
-							double a = ma[i][j];
-							if (operatorA != null)
-								a = operatorA.process(a);
-							double b = mb[i][j];
-							if (operatorB != null)
-								b = operatorB.process(b);
-							mb[i][j] = a * b;
-						}
-					}
-					gate.countDown();
-				}
-
-			};
-			runner.run(task);
-		}
-		return mb;
-	}
-
-	/**
-	 * 克罗内克积,对矩阵进行扩展
-	 * 
-	 * @param matrix
-	 * @param scale
-	 * @return
-	 */
-	private static double[][] kronecker(final double[][] matrix,
-			final Size scale) {
-		final int m = matrix.length;
-		int n = matrix[0].length;
-		final double[][] outMatrix = new double[m * scale.x][n * scale.y];
-		int cpuNum = ConcurenceRunner.cpuNum;
-		cpuNum = cpuNum < n ? cpuNum : 1;// 比cpu的个数小时，只用一个线程
-		int fregLength = (n + cpuNum - 1) / cpuNum;// 向上取整
-		final CountDownLatch gate = new CountDownLatch(cpuNum);
-		for (int cpu = 0; cpu < cpuNum; cpu++) {
-			int start = cpu * fregLength;
-			int tmp = (cpu + 1) * fregLength;
-			int end = tmp <= n ? tmp : n;
-			Task task = new Task(start, end) {
-
-				@Override
-				public void process(int start, int end) {
-					for (int i = 0; i < m; i++) {
-						for (int j = start; j < end; j++) {
-							for (int ki = i * scale.x; ki < (i + 1) * scale.x; ki++) {
-								for (int kj = j * scale.y; kj < (j + 1)
-										* scale.y; kj++) {
-									outMatrix[ki][kj] = matrix[i][j];
-								}
-							}
-						}
-					}
-					gate.countDown();
-				}
-
-			};
-			runner.run(task);
-		}
-		await(gate);
-		return outMatrix;
-	}
-
-	/**
-	 * 对矩阵进行缩小
-	 * 
-	 * @param matrix
-	 * @param scaleSize
-	 * @return
-	 */
-	private static double[][] scaleMatrix(final double[][] matrix,
-			final Size scale) {
-		int m = matrix.length;
-		int n = matrix[0].length;
-		final int sm = m / scale.x;
-		final int sn = n / scale.y;
-		final double[][] outMatrix = new double[sm][sn];
-		if (sm * scale.x != m || sn * scale.y != n)
-			throw new RuntimeException("scale不能整除matrix");
-		// 并发运行
-		int cpuNum = ConcurenceRunner.cpuNum;
-		cpuNum = cpuNum < sn ? cpuNum : 1;// 比cpu的个数小时，只用一个线程
-		int fregLength = (sn + cpuNum - 1) / cpuNum;// 想上取整
-		final CountDownLatch gate = new CountDownLatch(cpuNum);
-		final int size = scale.x * scale.y;
-		for (int cpu = 0; cpu < cpuNum; cpu++) {
-			int start = cpu * fregLength;
-			int tmp = (cpu + 1) * fregLength;
-			int end = tmp <= sn ? tmp : sn;
-			Task task = new Task(start, end) {
-				@Override
-				public void process(int start, int end) {
-					for (int i = 0; i < sm; i++) {
-						for (int j = start; j < end; j++) {
-							double sum = 0.0;
-							for (int si = i * scale.x; si < (i + 1) * scale.x; si++) {
-								for (int sj = j * scale.y; sj < (j + 1)
-										* scale.y; sj++) {
-									sum += matrix[si][sj];
-								}
-							}
-							outMatrix[i][j] = sum / size;
-						}
-					}
-					gate.countDown();
-				}
-			};
-			runner.run(task);
-
-		}
-		await(gate);
-		return outMatrix;
-	}
-
-	/**
-	 * 计算full模式的卷积
-	 * 
-	 * @param matrix
-	 * @param kernel
-	 * @return
-	 */
-	public static double[][] convnFull(double[][] matrix,
-			final double[][] kernel) {
-		int m = matrix.length;
-		int n = matrix[0].length;
-		final int km = kernel.length;
-		final int kn = kernel[0].length;
-		// 扩展矩阵
-		final double[][] extendMatrix = new double[m + 2 * (km - 1)][n + 2
-				* (kn - 1)];
-		for (int i = 0; i < m; i++) {
-			for (int j = 0; j < n; j++)
-				extendMatrix[i + km - 1][j + kn - 1] = matrix[i][j];
-		}
-		return convnValid(extendMatrix, kernel);
-	}
-
 	/**
 	 * 等待
 	 * 
 	 * @param gate
 	 */
+
 	private static void await(CountDownLatch gate) {
 		try {
 			gate.await();
@@ -464,181 +565,5 @@ public class CNN {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
-	}
-
-	/**
-	 * 计算valid模式的卷积
-	 * 
-	 * @param matrix
-	 * @param kernel
-	 * @return
-	 */
-	public static double[][] convnValid(final double[][] matrix,
-			final double[][] kernel) {
-		int m = matrix.length;
-		int n = matrix[0].length;
-		final int km = kernel.length;
-		final int kn = kernel[0].length;
-		// 需要做卷积的列数
-		int kns = n - kn + 1;
-		// 需要做卷积的行数
-		final int kms = m - km + 1;
-		// 结果矩阵
-		final double[][] outMatrix = new double[kms][kns];
-		// 并发运行
-		int cpuNum = ConcurenceRunner.cpuNum;
-		cpuNum = cpuNum < kns ? cpuNum : 1;// 比cpu的个数小时，只用一个线程
-		int fregLength = (kns + cpuNum - 1) / cpuNum;
-		// Log.i("kns:" + kns);
-		// Log.i("fregLength:" + fregLength);
-		final CountDownLatch gate = new CountDownLatch(cpuNum);
-		for (int cpu = 0; cpu < cpuNum; cpu++) {
-			int start = cpu * fregLength;
-			int tmp = (cpu + 1) * fregLength;
-			int end = tmp <= kns ? tmp : kns;
-			Task task = new Task(start, end) {
-
-				@Override
-				public void process(int start, int end) {
-
-					for (int i = 0; i < kms; i++) {
-						for (int j = start; j < end; j++) {
-							double sum = 0.0;
-							for (int ki = 0; ki < km; ki++) {
-								for (int kj = 0; kj < kn; kj++)
-									sum += matrix[i + ki][j + kj]
-											* kernel[ki][kj];
-							}
-							outMatrix[i][j] = sum;
-
-						}
-					}
-					gate.countDown();
-				}
-
-			};
-			runner.run(task);
-
-		}
-		await(gate);
-		return outMatrix;
-
-	}
-
-	/**
-	 * 测试卷积,测试结果：4核下并发并行的卷积提高不到2倍
-	 */
-	private static void testConvn() {
-		int count = 1;
-		double[][] m = new double[5000][500];
-		for (int i = 0; i < m.length; i++)
-			for (int j = 0; j < m[0].length; j++)
-				m[i][j] = count++;
-		double[][] k = new double[1][1];
-		for (int i = 0; i < k.length; i++)
-			for (int j = 0; j < k[0].length; j++)
-				k[i][j] = 1.5;
-		double[][] out;
-		// out= convnValid(m, k);
-		// Util.printMatrix(m);
-		out = convnFull(m, k);
-		// Util.printMatrix(out);
-		// System.out.println();
-		// out = convnFull(m, Util.rot180(k));
-		// Util.printMatrix(out);
-
-	}
-
-	private static void testScaleMatrix() {
-		int count = 1;
-		double[][] m = new double[20000][200];
-		for (int i = 0; i < m.length; i++)
-			for (int j = 0; j < m[0].length; j++)
-				m[i][j] = 1;
-		double[][] out = scaleMatrix(m, new Size(4, 4));
-		// Util.printMatrix(m);
-		// System.out.println();
-		// Util.printMatrix(out);
-	}
-
-	private static void testKronecker() {
-		int count = 1;
-		double[][] m = new double[5][5];
-		for (int i = 0; i < m.length; i++)
-			for (int j = 0; j < m[0].length; j++)
-				m[i][j] = count++;
-		double[][] out = kronecker(m, new Size(1, 1));
-		Util.printMatrix(m);
-		System.out.println();
-		Util.printMatrix(out);
-	}
-
-	private static void testMatrixProduct() {
-		int count = 1;
-		double[][] m = new double[5][5];
-		for (int i = 0; i < m.length; i++)
-			for (int j = 0; j < m[0].length; j++)
-				m[i][j] = count++;
-		double[][] k = new double[5][5];
-		for (int i = 0; i < k.length; i++)
-			for (int j = 0; j < k[0].length; j++)
-				k[i][j] = j;
-
-		Util.printMatrix(m);
-		Util.printMatrix(k);
-		double[][] out = matrixProduct(m, k, new Operator() {
-
-			@Override
-			public double process(double value) {
-
-				return value - 1;
-			}
-		}, new Operator() {
-
-			@Override
-			public double process(double value) {
-
-				return -1 * value;
-			}
-		});
-		Util.printMatrix(out);
-	}
-
-	private static void testCloneMatrix() {
-		int count = 1;
-		double[][] m = new double[5][5];
-		for (int i = 0; i < m.length; i++)
-			for (int j = 0; j < m[0].length; j++)
-				m[i][j] = count++;
-		double[][] out = cloneMatrix(m);
-		Util.printMatrix(m);
-
-		Util.printMatrix(out);
-	}
-
-	public static void main(String[] args) {
-		new TimedTest(new TestTask() {
-
-			@Override
-			public void process() {
-				// testConvn();
-				// testScaleMatrix();
-				// testKronecker();
-				testMatrixProduct();
-				// testCloneMatrix();
-			}
-		}, 1).test();
-		ConcurenceRunner.stop();
-	}
-
-	/**
-	 * 矩阵对应元素相乘时在每个元素上的操作
-	 * 
-	 * @author jiqunpeng
-	 * 
-	 *         创建时间：2014-7-9 下午9:28:35
-	 */
-	interface Operator {
-		public double process(double value);
 	}
 }

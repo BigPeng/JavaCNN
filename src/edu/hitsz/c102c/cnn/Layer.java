@@ -2,6 +2,7 @@ package edu.hitsz.c102c.cnn;
 
 import java.util.List;
 
+import edu.hitsz.c102c.util.Log;
 import edu.hitsz.c102c.util.Util;
 
 /**
@@ -35,6 +36,13 @@ public class Layer {
 	 */
 	public static void prepareForNewBatch() {
 		recordInBatch = 0;
+	}
+
+	/**
+	 * 准备下一条记录的训练
+	 */
+	public static void prepareForNewRecord() {
+		recordInBatch++;
 	}
 
 	/**
@@ -225,11 +233,10 @@ public class Layer {
 	 * @param frontMapNum
 	 */
 	public void initKerkel(int frontMapNum) {
-		double[][][][] kernel = new double[frontMapNum][outMapNum][kernelSize.x][kernelSize.y];
+		this.kernel = new double[frontMapNum][outMapNum][kernelSize.x][kernelSize.y];
 		for (int i = 0; i < frontMapNum; i++)
 			for (int j = 0; j < outMapNum; j++)
-				kernel[i][j] = Util.randomMatrix(kernelSize.x, kernelSize.y);
-		this.kernel = kernel;
+				kernel[i][j] = Util.randomMatrix(kernelSize.x, kernelSize.y);		
 	}
 
 	/**
@@ -276,7 +283,8 @@ public class Layer {
 	}
 
 	/**
-	 * 获取第index个map矩阵
+	 * 获取第index个map矩阵。处于性能考虑，没有返回复制对象，而是直接返回引用，调用端请谨慎，
+	 * 避免修改outmaps，如需修改请调用setMapValue(...)
 	 * 
 	 * @param index
 	 * @return
@@ -321,7 +329,8 @@ public class Layer {
 	}
 
 	/**
-	 * 获取第mapNo个map的残差
+	 * 获取第mapNo个map的残差.没有返回复制对象，而是直接返回引用，调用端请谨慎，
+	 * 避免修改errors，如需修改请调用setError(...)
 	 * 
 	 * @param mapNo
 	 * @return
@@ -329,4 +338,53 @@ public class Layer {
 	public double[][] getError(int mapNo) {
 		return errors[recordInBatch][mapNo];
 	}
+
+	/**
+	 * 获取所有(每个记录和每个map)的残差
+	 * 
+	 * @return
+	 */
+	public double[][][][] getErrors() {
+		return errors;
+	}
+
+	/**
+	 * 初始化残差数组
+	 * 
+	 * @param batchSize
+	 */
+	public void initErros(int batchSize) {
+		errors = new double[batchSize][outMapNum][mapSize.x][mapSize.y];
+	}
+
+	/**
+	 * 
+	 * @param lastMapNo
+	 * @param mapNo
+	 * @param kernel
+	 */
+	public void setKernel(int lastMapNo, int mapNo, double[][] kernel) {
+		this.kernel[lastMapNo][mapNo] = kernel;
+	}
+
+	/**
+	 * 获取第mapNo个
+	 * 
+	 * @param mapNo
+	 * @return
+	 */
+	public double getBias(int mapNo) {
+		return bias[mapNo];
+	}
+
+	/**
+	 * 设置第mapNo个map的偏置值
+	 * 
+	 * @param mapNo
+	 * @param value
+	 */
+	public void setBias(int mapNo, double value) {
+		bias[mapNo] = value;
+	}
+
 }
