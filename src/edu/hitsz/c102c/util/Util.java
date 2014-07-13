@@ -123,6 +123,7 @@ public class Util {
 				matrix[i][j] = r.nextDouble() / 10 - 0.05;
 			}
 		}
+		//printMatrix(matrix);
 		return matrix;
 	}
 
@@ -135,7 +136,8 @@ public class Util {
 	public static double[] randomArray(int len) {
 		double[] data = new double[len];
 		for (int i = 0; i < len; i++) {
-			data[i] = r.nextDouble() / 10 - 0.05;
+			//data[i] = r.nextDouble() / 10 - 0.05;
+			data[i] = 0;
 		}
 		return data;
 	}
@@ -217,7 +219,8 @@ public class Util {
 		final int m = ma.length;
 		int n = ma[0].length;
 		if (m != mb.length || n != mb[0].length)
-			throw new RuntimeException("两个矩阵大小不一致");
+			throw new RuntimeException("两个矩阵大小不一致 ma.length:" + ma.length
+					+ "  mb.length:" + mb.length);
 
 		for (int i = 0; i < m; i++) {
 			for (int j = 0; j < n; j++) {
@@ -347,7 +350,63 @@ public class Util {
 	}
 
 	public static double sigmod(double x) {
-		return 1 / (Math.pow(Math.E, -x));
+		return 1 / (1+Math.pow(Math.E, -x));		
+	}
+
+	/**
+	 * 对矩阵元素求和
+	 * 
+	 * @param error
+	 * @return 注意这个求和很可能会溢出
+	 */
+	@Deprecated
+	public static double sum(double[][] error) {
+		int m = error.length;
+		int n = error[0].length;
+		double sum = 0.0;
+		for (int i = 0; i < m; i++) {
+			for (int j = 0; j < n; j++) {
+				sum += error[i][j];
+			}
+		}
+		return sum;
+	}
+
+	/**
+	 * 对errors[...][j]元素求和
+	 * 
+	 * @param errors
+	 * @param j
+	 * @return
+	 */
+	public static double[][] sum(double[][][][] errors, int j) {
+		int m = errors[0][j].length;
+		int n = errors[0][j][0].length;
+		double[][] result = new double[m][n];
+		for (int mi = 0; mi < m; mi++) {
+			for (int nj = 0; nj < n; nj++) {
+				double sum = 0;
+				for (int i = 0; i < errors.length; i++)
+					sum += errors[i][j][mi][nj];
+				result[mi][nj] = sum;
+			}
+		}
+		return result;
+	}
+
+	public static int binaryArray2int(double[] array) {
+		int[] d = new int[array.length];
+		for (int i = 0; i < d.length; i++) {
+			if (array[i] >= 0.500000001)
+				d[i] = 1;
+			else
+				d[i] = 0;
+		}
+		String s = Arrays.toString(d);
+		String binary = s.substring(1, s.length() - 1).replace(", ", "");
+		int data = Integer.parseInt(binary, 2);
+		return data;
+
 	}
 
 	/**
@@ -448,59 +507,19 @@ public class Util {
 	}
 
 	public static void main(String[] args) {
-		new TimedTest(new TestTask() {
-
-			@Override
-			public void process() {
-				testConvn();
-				// testScaleMatrix();
-				// testKronecker();
-				// testMatrixProduct();
-				// testCloneMatrix();
-			}
-		}, 1).test();
-		ConcurenceRunner.stop();
+//		new TimedTest(new TestTask() {
+//
+//			@Override
+//			public void process() {
+//				testConvn();
+//				// testScaleMatrix();
+//				// testKronecker();
+//				// testMatrixProduct();
+//				// testCloneMatrix();
+//			}
+//		}, 1).test();
+//		ConcurenceRunner.stop();
+		System.out.println(sigmod(0.727855957917715));
 	}
 
-	/**
-	 * 对矩阵元素求和
-	 * 
-	 * @param error
-	 * @return 注意这个求和很可能会溢出
-	 */
-	@Deprecated
-	public static double sum(double[][] error) {
-		int m = error.length;
-		int n = error[0].length;
-		double sum = 0.0;
-		for (int i = 0; i < m; i++) {
-			for (int j = 0; j < n; j++) {
-				sum += error[i][j];
-			}
-		}
-		return sum;
-	}
-
-	/**
-	 * 对errors[...][j]元素求和
-	 * 
-	 * @param errors
-	 * @param j
-	 * @return
-	 */
-	public static double[][] sum(double[][][][] errors, int j) {
-		int m = errors[0][j].length;
-		int n = errors[0][j][0].length;
-		double[][] result = new double[m][n];
-		for (int mi = 0; mi < m; mi++) {
-			for (int nj = 0; nj < n; nj++) {
-				double sum = 0;
-				for (int i = 0; i < errors.length; i++)
-					sum += errors[i][j][mi][nj];
-				result[mi][nj] = sum;
-			}
-		}
-
-		return null;
-	}
 }

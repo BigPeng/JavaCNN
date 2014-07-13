@@ -1,7 +1,5 @@
 package edu.hitsz.c102c.cnn;
 
-import java.util.List;
-
 import edu.hitsz.c102c.util.Log;
 import edu.hitsz.c102c.util.Util;
 
@@ -26,6 +24,8 @@ public class Layer {
 	private double[][][][] errors;
 
 	private static int recordInBatch = 0;// 记录当前训练的是batch的第几条记录
+
+	private static int classNum;// 类别个数
 
 	private Layer() {
 
@@ -91,14 +91,15 @@ public class Layer {
 	 * @return
 	 */
 	public static Layer buildOutputLayer(int classNum) {
+		Layer.classNum = classNum;
 		Layer layer = new Layer();
 		layer.type = LayerType.output;
 		layer.mapSize = new Size(1, 1);
 		int outMapNum = 1;
-		while (outMapNum < classNum)
-			outMapNum <<= 1;
+		while ((1 << outMapNum) < classNum)
+			outMapNum += 1;
 		layer.outMapNum = outMapNum;
-		layer.kernelSize = new Size(1, 1);// 输出层卷积核的大小为1*1
+		Log.i("outMapNum" + outMapNum);
 		return layer;
 	}
 
@@ -222,10 +223,7 @@ public class Layer {
 			return new Size(x, y);
 		}
 	}
-
-	public static void main(String[] args) {
-
-	}
+	
 
 	/**
 	 * 随机初始化卷积核
@@ -236,7 +234,21 @@ public class Layer {
 		this.kernel = new double[frontMapNum][outMapNum][kernelSize.x][kernelSize.y];
 		for (int i = 0; i < frontMapNum; i++)
 			for (int j = 0; j < outMapNum; j++)
-				kernel[i][j] = Util.randomMatrix(kernelSize.x, kernelSize.y);		
+				kernel[i][j] = Util.randomMatrix(kernelSize.x, kernelSize.y);
+	}
+
+	/**
+	 * 输出层的卷积核的大小是上一层的map大小
+	 * 
+	 * @param frontMapNum
+	 * @param size
+	 */
+	public void initOutputKerkel(int frontMapNum, Size size) {
+		kernelSize = size;
+		this.kernel = new double[frontMapNum][outMapNum][kernelSize.x][kernelSize.y];
+		for (int i = 0; i < frontMapNum; i++)
+			for (int j = 0; j < outMapNum; j++)
+				kernel[i][j] = Util.randomMatrix(kernelSize.x, kernelSize.y);
 	}
 
 	/**
@@ -272,6 +284,8 @@ public class Layer {
 		outmaps[recordInBatch][mapNo][mapX][mapY] = value;
 	}
 
+	static int count = 0;
+
 	/**
 	 * 以矩阵形式设置第mapNo个map的值
 	 * 
@@ -279,6 +293,8 @@ public class Layer {
 	 * @param outMatrix
 	 */
 	public void setMapValue(int mapNo, double[][] outMatrix) {
+		// Log.i(type.toString());
+		// Util.printMatrix(outMatrix);
 		outmaps[recordInBatch][mapNo] = outMatrix;
 	}
 
@@ -364,6 +380,8 @@ public class Layer {
 	 * @param kernel
 	 */
 	public void setKernel(int lastMapNo, int mapNo, double[][] kernel) {
+//		if(type == LayerType.output)
+//			Util.printMatrix(kernel);
 		this.kernel[lastMapNo][mapNo] = kernel;
 	}
 
@@ -385,6 +403,47 @@ public class Layer {
 	 */
 	public void setBias(int mapNo, double value) {
 		bias[mapNo] = value;
+	}
+
+	/**
+	 * 获取batch各个map矩阵
+	 * 
+	 * @return
+	 */
+
+	public double[][][][] getMaps() {
+		return outmaps;
+	}
+
+	/**
+	 * 获取第recordId记录下第mapNo的残差
+	 * 
+	 * @param recordId
+	 * @param mapNo
+	 * @return
+	 */
+	public double[][] getError(int recordId, int mapNo) {
+		return errors[recordId][mapNo];
+	}
+
+	/**
+	 * 获取第recordId记录下第mapNo的输出map
+	 * 
+	 * @param recordId
+	 * @param mapNo
+	 * @return
+	 */
+	public double[][] getMap(int recordId, int mapNo) {
+		return outmaps[recordId][mapNo];
+	}
+
+	/**
+	 * 获取类别个数
+	 * 
+	 * @return
+	 */
+	public static int getClassNum() {
+		return classNum;
 	}
 
 }

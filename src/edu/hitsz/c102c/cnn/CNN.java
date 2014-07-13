@@ -1,6 +1,10 @@
 package edu.hitsz.c102c.cnn;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -15,8 +19,8 @@ import edu.hitsz.c102c.util.Util;
 import edu.hitsz.c102c.util.Util.Operator;
 
 public class CNN {
-	private static final double ALPHA = 0.05;
-	protected static final double LAMBDA = 0.01;
+	private static final double ALPHA = 0.01;
+	protected static final double LAMBDA = 0.005;
 	// 网络的各层
 	private List<Layer> layers;
 	// 层数
@@ -101,10 +105,15 @@ public class CNN {
 					train(trainset.getRecord(index));
 					Layer.prepareForNewRecord();
 				}
-				Layer.prepareForNewBatch();
+				// if (0 == 0)
+				// return;
 				// 跑完一个batch后更新权重
 				updateParas();
+				if (i % 50 == 0)
+					Log.i("epochsNum " + epochsNum + ":" + i);
 			}
+			Log.i("begin test");
+			Layer.prepareForNewBatch();
 			double precision = test(trainset);
 			Log.i("precision " + precision);
 		}
@@ -119,6 +128,7 @@ public class CNN {
 	private double test(Dataset trainset) {
 		Iterator<Record> iter = trainset.iter();
 		int right = 0;
+		int count = 0;
 		while (iter.hasNext()) {
 			Record record = iter.next();
 			forward(record);
@@ -132,9 +142,50 @@ public class CNN {
 			}
 			if (isSame(out, target)) {
 				right++;
+//				if (right % 1000 == 0)
+//					Log.i("out:" + Arrays.toString(out) + " \n target:"
+//							+ Arrays.toString(target));
 			}
+			Log.i("out:" + Arrays.toString(out) + " \n target:"
+					+ Arrays.toString(target));
 		}
 		return 1.0 * right / trainset.size();
+	}
+
+	/**
+	 * 预测结果
+	 * 
+	 * @param testset
+	 * @param fileName
+	 */
+	public void predict(Dataset testset, String fileName) {
+		Log.i("begin predict");
+		try {
+			int max = Layer.getClassNum();
+			PrintWriter writer = new PrintWriter(new File(fileName));
+			Iterator<Record> iter = testset.iter();
+			while (iter.hasNext()) {
+				Record record = iter.next();
+				forward(record);
+				Layer outputLayer = layers.get(layerNum - 1);
+
+				int mapNum = outputLayer.getOutMapNum();
+				double[] out = new double[mapNum];
+				for (int m = 0; m < mapNum; m++) {
+					double[][] outmap = outputLayer.getMap(m);
+					out[m] = outmap[0][0];
+				}
+				int lable = Util.binaryArray2int(out);
+				if (lable > max)
+					lable = lable - (1 << (out.length - 1));
+				writer.write(lable + "\n");
+			}
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		Log.i("end predict");
 	}
 
 	private boolean isSame(double[] output, double[] target) {
@@ -151,6 +202,7 @@ public class CNN {
 	private void train(Record record) {
 		forward(record);
 		backPropagation(record);
+		// System.exit(0);
 	}
 
 	/*
@@ -171,11 +223,30 @@ public class CNN {
 			switch (layer.getType()) {
 			case conv:
 			case output:
-				updateParas(layer, lastLayer);
+				updateKernels(layer, lastLayer);
+				updateBias(layer, lastLayer);
 				break;
 			default:
 				break;
 			}
+		}
+	}
+
+	/**
+	 * 更新偏置
+	 * 
+	 * @param layer
+	 * @param lastLayer
+	 */
+	private void updateBias(Layer layer, Layer lastLayer) {
+		double[][][][] errors = layer.getErrors();
+		int mapNum = layer.getOutMapNum();
+		for (int j = 0; j < mapNum; j++) {
+			double[][] error = Util.sum(errors, j);
+			// 更新偏置
+			double deltaBias = Util.sum(error) / batchSize;
+			double bias = layer.getBias(j) + ALPHA * deltaBias;
+			layer.setBias(j, bias);
 		}
 	}
 
@@ -187,16 +258,26 @@ public class CNN {
 	 * @param lastLayer
 	 *            前一层
 	 */
-	private void updateParas(Layer layer, Layer lastLayer) {
+	private void updateKernels(Layer layer, Layer lastLayer) {
 		int mapNum = layer.getOutMapNum();
 		int lastMapNum = lastLayer.getOutMapNum();
 		for (int j = 0; j < mapNum; j++) {
-			double[][][][] errors = layer.getErrors();
-			double[][] error = Util.sum(errors, j);
 			for (int i = 0; i < lastMapNum; i++) {
 				double[][] kernel = layer.getKernel(i, j);
-				double[][] deltaKernel = Util.convnValid(
-						Util.rot180(lastLayer.getMap(i)), error);
+				double[][] deltaKernel = null;
+				// 对batch的每个记录delta求和
+				for (int r = 0; r < batchSize; r++) {
+					double[][] error = layer.getError(r, j);
+					if (deltaKernel == null)
+						deltaKernel = Util.convnValid(
+								Util.rot180(lastLayer.getMap(r, i)), error);
+					else {// 累积求和
+						deltaKernel = Util.matrixOp(Util.convnValid(
+								Util.rot180(lastLayer.getMap(r, i)), error),
+								deltaKernel, null, null, Util.plus);
+					}
+				}
+
 				// 除以batchSize
 				deltaKernel = Util.matrixOp(deltaKernel, divide_batchSize);
 				// 更新卷积核
@@ -204,10 +285,6 @@ public class CNN {
 						multiply_lambda, multiply_alpha, Util.minus);
 				layer.setKernel(i, j, deltaKernel);
 			}
-			// 更新偏置
-			double deltaBias = Util.sum(error) / batchSize;
-			double bias = layer.getBias(j) + ALPHA * deltaBias;
-			layer.setBias(j, bias);
 		}
 	}
 
@@ -253,7 +330,7 @@ public class CNN {
 							Util.convnFull(nextError, Util.rot180(kernel)),
 							sum, null, null, Util.plus);
 			}
-			layer.setMapValue(i, sum);
+			layer.setError(i, sum);
 		}
 	}
 
@@ -368,6 +445,7 @@ public class CNN {
 
 				@Override
 				public void process(int start, int end) {
+
 					for (int i = 0; i < mapSize.x; i++) {
 						for (int j = start; j < end; j++) {
 							// 将记录属性的一维向量弄成二维矩阵
@@ -381,7 +459,6 @@ public class CNN {
 			runner.run(task);
 		}
 		await(gate);
-
 	}
 
 	/*
@@ -423,6 +500,8 @@ public class CNN {
 							}
 
 						});
+						if (sum[0][0] > 1)
+							Log.i(sum[0][0] + "");
 						layer.setMapValue(j, sum);
 					}
 					gate.countDown();
@@ -513,8 +592,8 @@ public class CNN {
 				layer.initOutmaps(batchSize);
 				break;
 			case output:
-				// 初始化权重（卷积核），共有frontMapNum*outMapNum个1*1卷积核
-				layer.initKerkel(frontMapNum);
+				// 初始化权重（卷积核），输出层的卷积核大小为上一层的map大小
+				layer.initOutputKerkel(frontMapNum, frontLayer.getMapSize());
 				// 初始化偏置，共有frontMapNum*outMapNum个偏置
 				layer.initBias(frontMapNum);
 				// batch的每个记录都要保持一份残差
@@ -523,7 +602,6 @@ public class CNN {
 				layer.initOutmaps(batchSize);
 				break;
 			}
-
 		}
 	}
 
