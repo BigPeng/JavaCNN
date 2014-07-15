@@ -117,13 +117,16 @@ public class Util {
 	 */
 	public static double[][] randomMatrix(int x, int y) {
 		double[][] matrix = new double[x][y];
+		int tag = 1;
 		for (int i = 0; i < x; i++) {
 			for (int j = 0; j < y; j++) {
 				// 随机值在[-0.05,0.05)之间，让权重初始化值较小，有利于于避免过拟合
 				matrix[i][j] = r.nextDouble() / 10 - 0.05;
+				// matrix[i][j] = tag * 0.5;
+				// tag *= -1;
 			}
 		}
-		//printMatrix(matrix);
+		// printMatrix(matrix);
 		return matrix;
 	}
 
@@ -136,7 +139,7 @@ public class Util {
 	public static double[] randomArray(int len) {
 		double[] data = new double[len];
 		for (int i = 0; i < len; i++) {
-			//data[i] = r.nextDouble() / 10 - 0.05;
+			// data[i] = r.nextDouble() / 10 - 0.05;
 			data[i] = 0;
 		}
 		return data;
@@ -322,7 +325,8 @@ public class Util {
 	 * @return
 	 */
 	public static double[][] convnValid(final double[][] matrix,
-			final double[][] kernel) {
+			double[][] kernel) {
+		// kernel = rot180(kernel);
 		int m = matrix.length;
 		int n = matrix[0].length;
 		final int km = kernel.length;
@@ -349,8 +353,47 @@ public class Util {
 
 	}
 
+	/**
+	 * 三维矩阵的卷积,这里要求两个矩阵的一维相同
+	 * 
+	 * @param matrix
+	 * @param kernel
+	 * @return
+	 */
+	public static double[][] convnValid(final double[][][][] matrix,
+			int mapNoX, double[][][][] kernel, int mapNoY) {
+		int m = matrix.length;
+		int n = matrix[0][mapNoX].length;
+		int h = matrix[0][mapNoX][0].length;
+		int km = kernel.length;
+		int kn = kernel[0][mapNoY].length;
+		int kh = kernel[0][mapNoY][0].length;
+		int kms = m - km + 1;
+		int kns = n - kn + 1;
+		int khs = h - kh + 1;
+		if (matrix.length != kernel.length)
+			throw new RuntimeException("矩阵与卷积核在第一维上不同");
+		// 结果矩阵
+		final double[][][] outMatrix = new double[kms][kns][khs];
+		for (int i = 0; i < kms; i++) {
+			for (int j = 0; j < kns; j++)
+				for (int k = 0; k < khs; k++) {
+					double sum = 0.0;
+					for (int ki = 0; ki < km; ki++) {
+						for (int kj = 0; kj < kn; kj++)
+							for (int kk = 0; kk < kh; kk++) {
+								sum += matrix[i + ki][mapNoX][j + kj][k + kk]
+										* kernel[ki][mapNoY][kj][kk];
+							}
+					}
+					outMatrix[i][j][k] = sum;
+				}
+		}
+		return outMatrix[0];
+	}
+
 	public static double sigmod(double x) {
-		return 1 / (1+Math.pow(Math.E, -x));		
+		return 1 / (1 + Math.pow(Math.E, -x));
 	}
 
 	/**
@@ -359,7 +402,7 @@ public class Util {
 	 * @param error
 	 * @return 注意这个求和很可能会溢出
 	 */
-	@Deprecated
+
 	public static double sum(double[][] error) {
 		int m = error.length;
 		int n = error[0].length;
@@ -507,19 +550,39 @@ public class Util {
 	}
 
 	public static void main(String[] args) {
-//		new TimedTest(new TestTask() {
-//
-//			@Override
-//			public void process() {
-//				testConvn();
-//				// testScaleMatrix();
-//				// testKronecker();
-//				// testMatrixProduct();
-//				// testCloneMatrix();
-//			}
-//		}, 1).test();
-//		ConcurenceRunner.stop();
+		// new TimedTest(new TestTask() {
+		//
+		// @Override
+		// public void process() {
+		// testConvn();
+		// // testScaleMatrix();
+		// // testKronecker();
+		// // testMatrixProduct();
+		// // testCloneMatrix();
+		// }
+		// }, 1).test();
+		// ConcurenceRunner.stop();
 		System.out.println(sigmod(0.727855957917715));
+		Double a = 1.0;
+		int b = 1;
+		System.out.println(a.equals(b));
+	}
+
+	/**
+	 * 取最大的元素的下标
+	 * 
+	 * @param out
+	 * @return
+	 */
+	public static int getMaxIndex(double[] out) {
+		double max = Integer.MIN_VALUE;
+		int index = 0;
+		for (int i = 1; i < out.length; i++)
+			if (out[i] > max) {
+				max = out[i];
+				index = i;
+			}
+		return index;
 	}
 
 }

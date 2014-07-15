@@ -1,5 +1,7 @@
 package edu.hitsz.c102c.util;
 
+import java.util.Locale;
+
 import edu.hitsz.c102c.util.TimedTest.TestTask;
 
 /**
@@ -33,6 +35,8 @@ public class TestArray {
 	}
 
 	public static void main(String[] args) {
+		String a = "aAdfa≈Ì_";
+		System.out.println(a.toUpperCase(Locale.CHINA));
 		double[][] d = new double[3][];
 //		d[0] = new double[] { 1,2,3 };
 //		d[1] = new double[] { 3,4,5,6 };
@@ -44,6 +48,8 @@ public class TestArray {
 			public void process() {
 				t.useFunc();
 			}
-		}, 100).test();
+		}, 1).test();
+	
+		
 	}
 }

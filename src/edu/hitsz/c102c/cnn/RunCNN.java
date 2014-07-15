@@ -17,29 +17,28 @@ public class RunCNN {
 		CNN cnn = new CNN(builder, 20);
 		String fileName = "data/train.format";
 		Dataset dataset = Dataset.load(fileName, ",", 784);
-		cnn.train(dataset, 3);
-		// dataset.clear();
-		// dataset = null;
-		// Dataset testset =
-		// Dataset.load("data/test.format", ",", -1);
-		// cnn.predict(testset, "data/test.predict");
+		cnn.train(dataset, 30);
+//		dataset.clear();
+//		dataset = null;
+//		Dataset testset = Dataset.load("data/test.format", ",", -1);
+//		cnn.predict(testset, "data/test.predict");
 	}
 
 	public static void tinyTest() {
 		LayerBuilder builder = new LayerBuilder();
-		builder.addLayer(Layer.buildInputLayer(new Size(4, 4)));
+		builder.addLayer(Layer.buildInputLayer(new Size(6, 6)));
 		Layer c = Layer.buildConvLayer(2, new Size(3, 3));
 		builder.addLayer(c);
 		builder.addLayer(Layer.buildSampLayer(new Size(2, 2)));
 		Layer out = Layer.buildOutputLayer(1);
 		builder.addLayer(out);
-		CNN cnn = new CNN(builder, 1);
-		double[][] k1 = { { 1, 1, 1 }, { 0, 1, 0 }, { 1, 0, 0 } };
-		double[][] k2 = { { 1, 0, 1 }, { 0, 1, 0 }, { 1, 0, 1 } };
+		CNN cnn = new CNN(builder, 2);
+		double[][] k1 = { { 1, 0, 1 }, { 1, 1, 0 }, { 1, 0, 0 } };
+		double[][] k2 = { { 1, 1, 1 }, { 1, 1, 0 }, { 1, 0, 0 } };
 		c.setKernel(0, 0, k1);
 		c.setKernel(0, 1, k2);
-		double[][] k11 = { { 0.5 } };
-		double[][] k22 = { { -0.5 } };
+		double[][] k11 = { { 0.5, -0.5 }, { -0.5, 0.5 } };
+		double[][] k22 = { { -0.5, 0.5 }, { 0.5, -0.5 } };
 		out.setKernel(0, 0, k11);
 		out.setKernel(1, 0, k22);
 		String fileName = "data/train.tiny";
@@ -48,8 +47,8 @@ public class RunCNN {
 	}
 
 	public static void main(String[] args) {
-		//runCnn();
-		tinyTest();
+		 runCnn();
+		//tinyTest();
 	}
 
 }

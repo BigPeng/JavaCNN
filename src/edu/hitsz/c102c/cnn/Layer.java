@@ -98,8 +98,8 @@ public class Layer {
 		int outMapNum = 1;
 		while ((1 << outMapNum) < classNum)
 			outMapNum += 1;
-		layer.outMapNum = outMapNum;
-		Log.i("outMapNum" + outMapNum);
+		layer.outMapNum = outMapNum;		
+		Log.i("outMapNum:" + layer.outMapNum);
 		return layer;
 	}
 
@@ -223,7 +223,6 @@ public class Layer {
 			return new Size(x, y);
 		}
 	}
-	
 
 	/**
 	 * 随机初始化卷积核
@@ -341,6 +340,8 @@ public class Layer {
 	 * @param matrix
 	 */
 	public void setError(int mapNo, double[][] matrix) {
+		// Log.i(type.toString());
+		// Util.printMatrix(matrix);
 		errors[recordInBatch][mapNo] = matrix;
 	}
 
@@ -380,8 +381,6 @@ public class Layer {
 	 * @param kernel
 	 */
 	public void setKernel(int lastMapNo, int mapNo, double[][] kernel) {
-//		if(type == LayerType.output)
-//			Util.printMatrix(kernel);
 		this.kernel[lastMapNo][mapNo] = kernel;
 	}
 
@@ -444,6 +443,15 @@ public class Layer {
 	 */
 	public static int getClassNum() {
 		return classNum;
+	}
+
+	/**
+	 * 获取所有的卷积核
+	 * 
+	 * @return
+	 */
+	public double[][][][] getKernel() {
+		return kernel;
 	}
 
 }
