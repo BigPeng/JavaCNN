@@ -1,5 +1,6 @@
 package edu.hitsz.c102c.util;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
@@ -16,12 +17,17 @@ public class Util {
 	 * 
 	 *         创建时间：2014-7-9 下午9:28:35
 	 */
-	public interface Operator {
+	public interface Operator  extends Serializable{
 		public double process(double value);
 	}
 
 	// 定义每个元素value都进行1-value的操作
 	public static final Operator one_value = new Operator() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 3752139491940330714L;
+
 		@Override
 		public double process(double value) {
 			return 1 - value;
@@ -30,13 +36,18 @@ public class Util {
 
 	// digmod函数
 	public static final Operator digmod = new Operator() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -1952718905019847589L;
+
 		@Override
 		public double process(double value) {
 			return 1 / (1 + Math.pow(Math.E, -value));
 		}
 	};
 
-	interface OperatorOnTwo {
+	interface OperatorOnTwo extends Serializable{
 		public double process(double a, double b);
 	}
 
@@ -44,6 +55,11 @@ public class Util {
 	 * 定义矩阵对应元素的加法操作
 	 */
 	public static final OperatorOnTwo plus = new OperatorOnTwo() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -6298144029766839945L;
+
 		@Override
 		public double process(double a, double b) {
 			return a + b;
@@ -53,6 +69,11 @@ public class Util {
 	 * 定义矩阵对应元素的乘法操作
 	 */
 	public static OperatorOnTwo multiply = new OperatorOnTwo() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -7053767821858820698L;
+
 		@Override
 		public double process(double a, double b) {
 			return a * b;
@@ -63,6 +84,11 @@ public class Util {
 	 * 定义矩阵对应元素的减法操作
 	 */
 	public static OperatorOnTwo minus = new OperatorOnTwo() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 7346065545555093912L;
+
 		@Override
 		public double process(double a, double b) {
 			return a - b;
@@ -514,11 +540,21 @@ public class Util {
 		Util.printMatrix(k);
 		double[][] out = matrixOp(m, k, new Operator() {
 
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = -680712567166604573L;
+
 			@Override
 			public double process(double value) {
 				return value - 1;
 			}
 		}, new Operator() {
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = -6335660830579545544L;
 
 			@Override
 			public double process(double value) {

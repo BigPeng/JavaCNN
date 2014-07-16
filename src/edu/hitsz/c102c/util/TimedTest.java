@@ -25,6 +25,7 @@ public class TimedTest {
 		for (int i = 0; i < repeat; i++) {
 			task.process();
 		}
-		System.out.println(System.currentTimeMillis() - t);
+		double cost = (System.currentTimeMillis() - t) / 1000.0;
+		Log.i("cost ", cost + "s");
 	}
 }

@@ -1,5 +1,7 @@
 package edu.hitsz.c102c.cnn;
 
+import java.io.Serializable;
+
 import edu.hitsz.c102c.util.Log;
 import edu.hitsz.c102c.util.Util;
 
@@ -10,7 +12,11 @@ import edu.hitsz.c102c.util.Util;
  * 
  *         创建时间：2014-7-8 下午3:58:46
  */
-public class Layer {
+public class Layer implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5747622503947497069L;
 	private LayerType type;// 层的类型
 	private int outMapNum;// 输出map的个数
 	private Size mapSize;// map的大小
@@ -25,7 +31,7 @@ public class Layer {
 
 	private static int recordInBatch = 0;// 记录当前训练的是batch的第几条记录
 
-	private static int classNum;// 类别个数
+	private int classNum = -1;// 类别个数
 
 	private Layer() {
 
@@ -91,14 +97,14 @@ public class Layer {
 	 * @return
 	 */
 	public static Layer buildOutputLayer(int classNum) {
-		Layer.classNum = classNum;
 		Layer layer = new Layer();
+		layer.classNum = classNum;
 		layer.type = LayerType.output;
 		layer.mapSize = new Size(1, 1);
 		int outMapNum = 1;
 		while ((1 << outMapNum) < classNum)
 			outMapNum += 1;
-		layer.outMapNum = outMapNum;		
+		layer.outMapNum = outMapNum;
 		Log.i("outMapNum:" + layer.outMapNum);
 		return layer;
 	}
@@ -179,8 +185,9 @@ public class Layer {
 	 * 
 	 *         创建时间：2014-7-8 下午4:11:00
 	 */
-	public static class Size {
+	public static class Size implements Serializable {
 
+		private static final long serialVersionUID = -209157832162004118L;
 		public final int x;
 		public final int y;
 
@@ -441,7 +448,7 @@ public class Layer {
 	 * 
 	 * @return
 	 */
-	public static int getClassNum() {
+	public int getClassNum() {
 		return classNum;
 	}
 
