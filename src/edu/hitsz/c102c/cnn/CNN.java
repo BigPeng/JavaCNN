@@ -2,7 +2,6 @@ package edu.hitsz.c102c.cnn;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -13,13 +12,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import edu.hitsz.c102c.cnn.Layer.Size;
 import edu.hitsz.c102c.data.Dataset;
 import edu.hitsz.c102c.data.Dataset.Record;
-import edu.hitsz.c102c.util.ConcurenceRunner;
 import edu.hitsz.c102c.util.ConcurenceRunner.TaskManager;
 import edu.hitsz.c102c.util.Log;
 import edu.hitsz.c102c.util.Util;
@@ -31,7 +28,7 @@ public class CNN implements Serializable {
 	 */
 	private static final long serialVersionUID = 337920299147929932L;
 	private static final double ALPHA = 1;
-	protected static final double LAMBDA = 0.0001;
+	protected static final double LAMBDA = 0;
 	// 网络的各层
 	private List<Layer> layers;
 	// 层数
@@ -117,29 +114,29 @@ public class CNN implements Serializable {
 		for (int t = 0; t < repeat && !stopTrain.get(); t++) {
 			int epochsNum = 1 + trainset.size() / batchSize;// 多抽取一次，即向上取整
 			Log.i(t + "th epochsNum:" + epochsNum);
+			int right = 0;
+			int count = 0;
 			for (int i = 0; i < epochsNum; i++) {
-				int[] randPerm = Util.randomPerm(trainset.size(), batchSize);
+				//int[] randPerm = Util.randomPerm(trainset.size(), batchSize);
+				int[] randPerm = { 0, 1 };
 				Layer.prepareForNewBatch();
 				for (int index : randPerm) {
-					train(trainset.getRecord(index));
+					boolean isRight = train(trainset.getRecord(index));
+					if (isRight)
+						right++;
+					count++;
 					Layer.prepareForNewRecord();
 				}
-				// if (0 == 0)
-				// return;
 				// 跑完一个batch后更新权重
 				updateParas();
-				if (i % 100 == 0) {
+				if (i % 50 == 0) {
 					System.out.print("..");
-					if (i + 100 > epochsNum)
+					if (i + 50 > epochsNum)
 						System.out.println();
-					// Log.i("epochsNum " + epochsNum +
-					// ":"
-					// + i);
 				}
 			}
-			Log.i("begin test " + t);
-			Layer.prepareForNewBatch();
-			double precision = test(trainset);
+			Log.i("precision " + right + "/" + count + "="
+					+ (1.0 * right / count));
 		}
 	}
 
@@ -147,6 +144,7 @@ public class CNN implements Serializable {
 
 	static class Lisenter extends Thread {
 		Lisenter() {
+			setDaemon(true);
 			stopTrain = new AtomicBoolean(false);
 		}
 
@@ -222,6 +220,7 @@ public class CNN implements Serializable {
 		try {
 			int max = layers.get(layerNum - 1).getClassNum();
 			PrintWriter writer = new PrintWriter(new File(fileName));
+			Layer.prepareForNewBatch();
 			Iterator<Record> iter = testset.iter();
 			while (iter.hasNext()) {
 				Record record = iter.next();
@@ -258,18 +257,26 @@ public class CNN implements Serializable {
 		return r;
 	}
 
-	private void train(Record record) {
+	/**
+	 * 训练一条记录，同时返回是否预测正确当前记录
+	 * 
+	 * @param record
+	 * @return
+	 */
+	private boolean train(Record record) {
 		forward(record);
-		backPropagation(record);
+		boolean result = backPropagation(record);
+		return result;
 		// System.exit(0);
 	}
 
 	/*
 	 * 反向传输
 	 */
-	private void backPropagation(Record record) {
-		setOutLayerErrors(record);
+	private boolean backPropagation(Record record) {
+		boolean result = setOutLayerErrors(record);
 		setHiddenLayerErrors();
+		return result;
 	}
 
 	/**
@@ -458,33 +465,44 @@ public class CNN implements Serializable {
 	 * 设置输出层的残差值,输出层的神经单元个数较少，暂不考虑多线程
 	 * 
 	 * @param record
+	 * @return
 	 */
-	private void setOutLayerErrors(Record record) {
+	private boolean setOutLayerErrors(Record record) {
 
 		Layer outputLayer = layers.get(layerNum - 1);
 		int mapNum = outputLayer.getOutMapNum();
-		double[] target = record.getDoubleEncodeTarget(mapNum);
-		for (int m = 0; m < mapNum; m++) {
-			double[][] outmap = outputLayer.getMap(m);
-			double output = outmap[0][0];
-			double errors = output * (1 - output) * (target[m] - output);
-			outputLayer.setError(m, 0, 0, errors);
-		}
-
-		// double[] errors = new double[mapNum];
+		// double[] target =
+		// record.getDoubleEncodeTarget(mapNum);
 		// double[] outmaps = new double[mapNum];
 		// for (int m = 0; m < mapNum; m++) {
 		// double[][] outmap = outputLayer.getMap(m);
-		// outmaps[m] = outmap[0][0];
-		//
+		// double output = outmap[0][0];
+		// outmaps[m] = output;
+		// double errors = output * (1 - output) *
+		// (target[m] - output);
+		// outputLayer.setError(m, 0, 0, errors);
 		// }
-		//
-		// errors[record.getLable().intValue()] = 1;
-		// for (int m = 0; m < mapNum; m++) {
-		// outputLayer.setError(m, 0, 0, outmaps[m] *
-		// (1 - outmaps[m])
-		// * (errors[m] - outmaps[m]));
-		// }
+		// // 正确
+		// if (isSame(outmaps, target))
+		// return true;
+		// return false;
+
+		double[] target = new double[mapNum];
+		double[] outmaps = new double[mapNum];
+		for (int m = 0; m < mapNum; m++) {
+			double[][] outmap = outputLayer.getMap(m);
+			outmaps[m] = outmap[0][0];
+
+		}
+		int lable = record.getLable().intValue();
+		target[lable] = 1;
+		Log.i("target:" + Arrays.toString(target) + " outmaps:"
+				+ Arrays.toString(outmaps) + " " + record.getLable());
+		for (int m = 0; m < mapNum; m++) {
+			outputLayer.setError(m, 0, 0, outmaps[m] * (1 - outmaps[m])
+					* (target[m] - outmaps[m]));
+		}
+		return lable == Util.getMaxIndex(outmaps);
 	}
 
 	/**

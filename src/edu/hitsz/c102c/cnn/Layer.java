@@ -101,10 +101,11 @@ public class Layer implements Serializable {
 		layer.classNum = classNum;
 		layer.type = LayerType.output;
 		layer.mapSize = new Size(1, 1);
-		int outMapNum = 1;
-		while ((1 << outMapNum) < classNum)
-			outMapNum += 1;
-		layer.outMapNum = outMapNum;
+		layer.outMapNum = classNum;
+//		int outMapNum = 1;
+//		while ((1 << outMapNum) < classNum)
+//			outMapNum += 1;
+//		layer.outMapNum = outMapNum;
 		Log.i("outMapNum:" + layer.outMapNum);
 		return layer;
 	}

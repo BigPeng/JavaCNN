@@ -17,7 +17,7 @@ public class Util {
 	 * 
 	 *         创建时间：2014-7-9 下午9:28:35
 	 */
-	public interface Operator  extends Serializable{
+	public interface Operator extends Serializable {
 		public double process(double value);
 	}
 
@@ -47,7 +47,7 @@ public class Util {
 		}
 	};
 
-	interface OperatorOnTwo extends Serializable{
+	interface OperatorOnTwo extends Serializable {
 		public double process(double a, double b);
 	}
 
@@ -147,9 +147,9 @@ public class Util {
 		for (int i = 0; i < x; i++) {
 			for (int j = 0; j < y; j++) {
 				// 随机值在[-0.05,0.05)之间，让权重初始化值较小，有利于于避免过拟合
-				matrix[i][j] = r.nextDouble() / 10 - 0.05;
-				// matrix[i][j] = tag * 0.5;
-				// tag *= -1;
+				//matrix[i][j] = r.nextDouble() / 10 - 0.05;
+				matrix[i][j] = tag * 0.5;
+				tag *= -1;
 			}
 		}
 		// printMatrix(matrix);
@@ -165,7 +165,7 @@ public class Util {
 	public static double[] randomArray(int len) {
 		double[] data = new double[len];
 		for (int i = 0; i < len; i++) {
-			// data[i] = r.nextDouble() / 10 - 0.05;
+			//data[i] = r.nextDouble() / 10 - 0.05;
 			data[i] = 0;
 		}
 		return data;
@@ -352,7 +352,7 @@ public class Util {
 	 */
 	public static double[][] convnValid(final double[][] matrix,
 			double[][] kernel) {
-		// kernel = rot180(kernel);
+		//kernel = rot180(kernel);
 		int m = matrix.length;
 		int n = matrix[0].length;
 		final int km = kernel.length;
