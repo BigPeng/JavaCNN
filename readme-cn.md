@@ -1,5 +1,5 @@
 # JavaCNN
-一个卷积神经网络的java实现. 仿Matlab toolbox(https://github.com/rasmusbergpalm/DeepLearnToolbox)实现的，同时进行了部分改进，使得卷积核和采样块可以为矩形而不仅仅是正方形。更多细节，请查看http://www.cnblogs.com/fengfenggirl/p/cnn_implement.html
+一个卷积神经网络的java实现. 仿Matlab toolbox(https://github.com/rasmusbergpalm/DeepLearnToolbox )实现的，同时进行了部分改进，使得卷积核和采样块可以为矩形而不仅仅是正方形。更多细节，请查看http://www.cnblogs.com/fengfenggirl/p/cnn_implement.html
 ## 创建一个卷积神经网络
 
 	LayerBuilder builder = new LayerBuilder();
