@@ -102,10 +102,10 @@ public class Layer implements Serializable {
 		layer.type = LayerType.output;
 		layer.mapSize = new Size(1, 1);
 		layer.outMapNum = classNum;
-//		int outMapNum = 1;
-//		while ((1 << outMapNum) < classNum)
-//			outMapNum += 1;
-//		layer.outMapNum = outMapNum;
+		// int outMapNum = 1;
+		// while ((1 << outMapNum) < classNum)
+		// outMapNum += 1;
+		// layer.outMapNum = outMapNum;
 		Log.i("outMapNum:" + layer.outMapNum);
 		return layer;
 	}
@@ -237,11 +237,14 @@ public class Layer implements Serializable {
 	 * 
 	 * @param frontMapNum
 	 */
-	public void initKerkel(int frontMapNum) {
+	public void initKernel(int frontMapNum) {
+//		int fan_out = getOutMapNum() * kernelSize.x * kernelSize.y;
+//		int fan_in = frontMapNum * kernelSize.x * kernelSize.y;
+//		double factor = 2 * Math.sqrt(6 / (fan_in + fan_out));
 		this.kernel = new double[frontMapNum][outMapNum][kernelSize.x][kernelSize.y];
 		for (int i = 0; i < frontMapNum; i++)
 			for (int j = 0; j < outMapNum; j++)
-				kernel[i][j] = Util.randomMatrix(kernelSize.x, kernelSize.y);
+				kernel[i][j] = Util.randomMatrix(kernelSize.x, kernelSize.y,true);
 	}
 
 	/**
@@ -252,10 +255,13 @@ public class Layer implements Serializable {
 	 */
 	public void initOutputKerkel(int frontMapNum, Size size) {
 		kernelSize = size;
+//		int fan_out = getOutMapNum() * kernelSize.x * kernelSize.y;
+//		int fan_in = frontMapNum * kernelSize.x * kernelSize.y;
+//		double factor = 2 * Math.sqrt(6 / (fan_in + fan_out));
 		this.kernel = new double[frontMapNum][outMapNum][kernelSize.x][kernelSize.y];
 		for (int i = 0; i < frontMapNum; i++)
 			for (int j = 0; j < outMapNum; j++)
-				kernel[i][j] = Util.randomMatrix(kernelSize.x, kernelSize.y);
+				kernel[i][j] = Util.randomMatrix(kernelSize.x, kernelSize.y,false);
 	}
 
 	/**

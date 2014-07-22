@@ -139,17 +139,20 @@ public class Util {
 	 * 
 	 * @param x
 	 * @param y
+	 * @param b
 	 * @return
 	 */
-	public static double[][] randomMatrix(int x, int y) {
+	public static double[][] randomMatrix(int x, int y, boolean b) {
 		double[][] matrix = new double[x][y];
 		int tag = 1;
 		for (int i = 0; i < x; i++) {
 			for (int j = 0; j < y; j++) {
 				// 随机值在[-0.05,0.05)之间，让权重初始化值较小，有利于于避免过拟合
-				//matrix[i][j] = r.nextDouble() / 10 - 0.05;
-				matrix[i][j] = tag * 0.5;
-				tag *= -1;
+				matrix[i][j] = (r.nextDouble() - 0.05) / 10;
+//				matrix[i][j] = tag * 0.5;
+//				if (b)
+//					matrix[i][j] *= 1.0*(i + j + 2) / (i + 1) / (j + 1);
+//				tag *= -1;
 			}
 		}
 		// printMatrix(matrix);
@@ -165,7 +168,7 @@ public class Util {
 	public static double[] randomArray(int len) {
 		double[] data = new double[len];
 		for (int i = 0; i < len; i++) {
-			//data[i] = r.nextDouble() / 10 - 0.05;
+			// data[i] = r.nextDouble() / 10 - 0.05;
 			data[i] = 0;
 		}
 		return data;
@@ -611,7 +614,7 @@ public class Util {
 	 * @return
 	 */
 	public static int getMaxIndex(double[] out) {
-		double max = Integer.MIN_VALUE;
+		double max = out[0];
 		int index = 0;
 		for (int i = 1; i < out.length; i++)
 			if (out[i] > max) {
@@ -619,6 +622,14 @@ public class Util {
 				index = i;
 			}
 		return index;
+	}
+
+	public static String fomart(double[] data) {
+		StringBuilder sb = new StringBuilder("[");
+		for (double each : data)
+			sb.append(String.format("%4f,", each));
+		sb.append("]");
+		return sb.toString();
 	}
 
 }

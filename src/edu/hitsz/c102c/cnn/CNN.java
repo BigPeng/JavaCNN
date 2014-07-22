@@ -27,7 +27,7 @@ public class CNN implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 337920299147929932L;
-	private static final double ALPHA = 1;
+	private static double ALPHA = 0.85;
 	protected static final double LAMBDA = 0;
 	// 网络的各层
 	private List<Layer> layers;
@@ -112,14 +112,17 @@ public class CNN implements Serializable {
 		// 监听停止按钮
 		new Lisenter().start();
 		for (int t = 0; t < repeat && !stopTrain.get(); t++) {
-			int epochsNum = 1 + trainset.size() / batchSize;// 多抽取一次，即向上取整
-			Log.i(t + "th epochsNum:" + epochsNum);
+			int epochsNum = trainset.size() / batchSize;
+			if (trainset.size() % batchSize != 0)
+				epochsNum++;// 多抽取一次，即向上取整
+			Log.i("");
+			Log.i(t + "th iter epochsNum:" + epochsNum);
 			int right = 0;
 			int count = 0;
 			for (int i = 0; i < epochsNum; i++) {
-				//int[] randPerm = Util.randomPerm(trainset.size(), batchSize);
-				int[] randPerm = { 0, 1 };
+				int[] randPerm = Util.randomPerm(trainset.size(), batchSize);
 				Layer.prepareForNewBatch();
+
 				for (int index : randPerm) {
 					boolean isRight = train(trainset.getRecord(index));
 					if (isRight)
@@ -127,6 +130,7 @@ public class CNN implements Serializable {
 					count++;
 					Layer.prepareForNewRecord();
 				}
+
 				// 跑完一个batch后更新权重
 				updateParas();
 				if (i % 50 == 0) {
@@ -135,8 +139,12 @@ public class CNN implements Serializable {
 						System.out.println();
 				}
 			}
-			Log.i("precision " + right + "/" + count + "="
-					+ (1.0 * right / count));
+			double p = 1.0 * right / count;
+			if (t % 10 == 1 && p > 0.96) {//动态调整准学习速率
+				ALPHA = 0.001 + ALPHA * 0.9;
+				Log.i("Set alpha = " + ALPHA);
+			}
+			Log.i("precision " + right + "/" + count + "=" + p);
 		}
 	}
 
@@ -150,7 +158,7 @@ public class CNN implements Serializable {
 
 		@Override
 		public void run() {
-			System.out.println("输入&结束迭代");
+			System.out.println("Input & to stop train.");
 			while (true) {
 				try {
 					int a = System.in.read();
@@ -174,35 +182,21 @@ public class CNN implements Serializable {
 	 * @return
 	 */
 	public double test(Dataset trainset) {
+		Layer.prepareForNewBatch();
 		Iterator<Record> iter = trainset.iter();
 		int right = 0;
-		int count = 0;
 		while (iter.hasNext()) {
 			Record record = iter.next();
 			forward(record);
 			Layer outputLayer = layers.get(layerNum - 1);
-			int mapNum = outputLayer.getOutMapNum();
-			double[] target = record.getDoubleEncodeTarget(mapNum);
+			int mapNum = outputLayer.getOutMapNum();		
 			double[] out = new double[mapNum];
 			for (int m = 0; m < mapNum; m++) {
 				double[][] outmap = outputLayer.getMap(m);
 				out[m] = outmap[0][0];
 			}
-			// if (record.getLable().intValue() ==
-			// Util.getMaxIndex(out))
-			// right++;
-			if (isSame(out, target)) {
-				right++;
-				// if (right % 1000 == 0)
-				// Log.i("out:" + Arrays.toString(out)
-				// + " \n target:"
-				// + Arrays.toString(target));
-			}
-
-			// if (count++ % 1000 == 0)
-			// Log.i("out:" + Arrays.toString(out) +
-			// " \n target:"
-			// + Arrays.toString(target));
+			if (record.getLable().intValue() == Util.getMaxIndex(out))
+				right++;		
 		}
 		double p = 1.0 * right / trainset.size();
 		Log.i("precision", p + "");
@@ -233,9 +227,12 @@ public class CNN implements Serializable {
 					double[][] outmap = outputLayer.getMap(m);
 					out[m] = outmap[0][0];
 				}
-				int lable = Util.binaryArray2int(out);
-				if (lable >= max)
-					lable = lable - (1 << (out.length - 1));
+				// int lable =
+				// Util.binaryArray2int(out);
+				int lable = Util.getMaxIndex(out);
+				// if (lable >= max)
+				// lable = lable - (1 << (out.length -
+				// 1));
 				writer.write(lable + "\n");
 			}
 			writer.flush();
@@ -496,8 +493,9 @@ public class CNN implements Serializable {
 		}
 		int lable = record.getLable().intValue();
 		target[lable] = 1;
-		Log.i("target:" + Arrays.toString(target) + " outmaps:"
-				+ Arrays.toString(outmaps) + " " + record.getLable());
+		// Log.i(record.getLable() + "outmaps:" +
+		// Util.fomart(outmaps)
+		// + Arrays.toString(target));
 		for (int m = 0; m < mapNum; m++) {
 			outputLayer.setError(m, 0, 0, outmaps[m] * (1 - outmaps[m])
 					* (target[m] - outmaps[m]));
@@ -641,7 +639,8 @@ public class CNN implements Serializable {
 				layer.setMapSize(frontLayer.getMapSize().subtract(
 						layer.getKernelSize(), 1));
 				// 初始化卷积核，共有frontMapNum*outMapNum个卷积核
-				layer.initKerkel(frontMapNum);
+
+				layer.initKernel(frontMapNum);
 				// 初始化偏置，共有frontMapNum*outMapNum个偏置
 				layer.initBias(frontMapNum);
 				// batch的每个记录都要保持一份残差

@@ -1,4 +1,5 @@
 bin/
 *.class
+*MyTest.java
 data/
 model/
