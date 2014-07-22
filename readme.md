@@ -1,4 +1,4 @@
-# CNN
+# JavaCNN
 A Java implement of Convolutional Neural Network. Learn from DeepLearnToolbox(https://github.com/rasmusbergpalm/DeepLearnToolbox) more detail. see here(http://www.cnblogs.com/fengfenggirl/p/cnn_implement.html)
 ## Build a CNN
 
