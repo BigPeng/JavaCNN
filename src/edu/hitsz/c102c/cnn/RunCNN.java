@@ -2,7 +2,7 @@ package edu.hitsz.c102c.cnn;
 
 import edu.hitsz.c102c.cnn.CNN.LayerBuilder;
 import edu.hitsz.c102c.cnn.Layer.Size;
-import edu.hitsz.c102c.data.Dataset;
+import edu.hitsz.c102c.dataset.Dataset;
 import edu.hitsz.c102c.util.ConcurenceRunner;
 import edu.hitsz.c102c.util.TimedTest;
 import edu.hitsz.c102c.util.TimedTest.TestTask;
@@ -42,7 +42,6 @@ public class RunCNN {
 			@Override
 			public void process() {
 				runCnn();
-
 			}
 		}, 1).test();
 		ConcurenceRunner.stop();

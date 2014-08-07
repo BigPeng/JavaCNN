@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import edu.hitsz.c102c.cnn.Layer.Size;
-import edu.hitsz.c102c.data.Dataset;
-import edu.hitsz.c102c.data.Dataset.Record;
+import edu.hitsz.c102c.dataset.Dataset;
+import edu.hitsz.c102c.dataset.Dataset.Record;
 import edu.hitsz.c102c.util.ConcurenceRunner.TaskManager;
 import edu.hitsz.c102c.util.Log;
 import edu.hitsz.c102c.util.Util;
