@@ -6,15 +6,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class Dataset {
-	// ±£´æÊý¾Ý
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	private List<Record> records;
-	// Àà±ðÏÂ±ê
+	// ï¿½ï¿½ï¿½ï¿½Â±ï¿½
 	private int lableIndex;
 
 	private double maxLable = -1;
@@ -50,22 +48,22 @@ public class Dataset {
 	}
 
 	/**
-	 * Çå¿ÕÊý¾Ý
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	 */
 	public void clear() {
 		records.clear();
 	}
 
 	/**
-	 * Ìí¼ÓÒ»¸ö¼ÇÂ¼
+	 * ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Â¼
 	 * 
 	 * @param attrs
-	 *            ¼ÇÂ¼µÄÊôÐÔ
-	 * @param lable
-	 *            ¼ÇÂ¼µÄÀà±ê
+	 *            ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	 * @param label
+	 *            ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½
 	 */
-	public void append(double[] attrs, Double lable) {
-		records.add(new Record(attrs, lable));
+	public void append(double[] attrs, Double label) {
+		records.add(new Record(attrs, label));
 	}
 
 	public Iterator<Record> iter() {
@@ -73,7 +71,7 @@ public class Dataset {
 	}
 
 	/**
-	 * »ñÈ¡µÚindexÌõ¼ÇÂ¼µÄÊôÐÔ
+	 * ï¿½ï¿½È¡ï¿½ï¿½indexï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	 * 
 	 * @param index
 	 * @return
@@ -87,14 +85,14 @@ public class Dataset {
 	}
 
 	/**
-	 * µ¼ÈëÊý¾Ý¼¯
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¼ï¿½
 	 * 
 	 * @param filePath
-	 *            ÎÄ¼þÃû¼ÓÂ·¾¶
+	 *            ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½
 	 * @param tag
-	 *            ×Ö¶Î·Ö¸ô·û
+	 *            ï¿½Ö¶Î·Ö¸ï¿½ï¿½ï¿½
 	 * @param lableIndex
-	 *            Àà±êÏÂ±ê£¬´Ó0¿ªÊ¼
+	 *            ï¿½ï¿½ï¿½ï¿½Â±ê£¬ï¿½ï¿½0ï¿½ï¿½Ê¼
 	 * @return
 	 */
 	public static Dataset load(String filePath, String tag, int lableIndex) {
@@ -121,34 +119,34 @@ public class Dataset {
 			e.printStackTrace();
 			return null;
 		}
-		System.out.println("µ¼ÈëÊý¾Ý:" + dataset.size());
+		System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:" + dataset.size());
 		return dataset;
 	}
 
 	/**
-	 * Êý¾Ý¼ÇÂ¼(ÊµÀý),¼ÇÂ¼ÓÉÊôÐÔºÍÀà±ð×é³É,Àà±ð±ØÐëÎªµÚÒ»ÁÐ»òÕß×îºóÒ»ÁÐ»òÕß¿Õ
+	 * ï¿½ï¿½ï¿½Ý¼ï¿½Â¼(Êµï¿½ï¿½),ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½Ôºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Ò»ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Ð»ï¿½ï¿½ß¿ï¿½
 	 * 
 	 * @author jiqunpeng
 	 * 
-	 *         ´´½¨Ê±¼ä£º2014-6-15 ÏÂÎç8:03:29
+	 *         ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£º2014-6-15 ï¿½ï¿½ï¿½ï¿½8:03:29
 	 */
 	public class Record {
-		// ´æ´¢Êý¾Ý
+		// ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½
 		private double[] attrs;
-		private Double lable;
+		private Double label;
 
-		private Record(double[] attrs, Double lable) {
+		private Record(double[] attrs, Double label) {
 			this.attrs = attrs;
-			this.lable = lable;
+			this.label = label;
 		}
 
 		public Record(double[] data) {
 			if (lableIndex == -1)
 				attrs = data;
 			else {
-				lable = data[lableIndex];
-				if (lable > maxLable)
-					maxLable = lable;
+				label = data[lableIndex];
+				if (label > maxLable)
+					maxLable = label;
 				if (lableIndex == 0)
 					attrs = Arrays.copyOfRange(data, 1, data.length);
 				else
@@ -157,7 +155,7 @@ public class Dataset {
 		}
 
 		/**
-		 * ¸Ã¼ÇÂ¼µÄÊôÐÔ
+		 * ï¿½Ã¼ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		 * 
 		 * @return
 		 */
@@ -169,30 +167,30 @@ public class Dataset {
 			StringBuilder sb = new StringBuilder();
 			sb.append("attrs:");
 			sb.append(Arrays.toString(attrs));
-			sb.append("lable:");
-			sb.append(lable);
+			sb.append("label:");
+			sb.append(label);
 			return sb.toString();
 		}
 
 		/**
-		 * ¸Ã¼ÇÂ¼µÄÀà±ê
+		 * ï¿½Ã¼ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½
 		 * 
 		 * @return
 		 */
 		public Double getLable() {
 			if (lableIndex == -1)
 				return null;
-			return lable;
+			return label;
 		}
 
 		/**
-		 * ¶ÔÀà±ê½øÐÐ¶þ½øÖÆ±àÂë
+		 * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½Æ±ï¿½ï¿½ï¿½
 		 * 
 		 * @param n
 		 * @return
 		 */
 		public int[] getEncodeTarget(int n) {
-			String binary = Integer.toBinaryString(lable.intValue());
+			String binary = Integer.toBinaryString(label.intValue());
 			byte[] bytes = binary.getBytes();
 			int[] encode = new int[n];
 			int j = n;
@@ -203,7 +201,7 @@ public class Dataset {
 		}
 
 		public double[] getDoubleEncodeTarget(int n) {
-			String binary = Integer.toBinaryString(lable.intValue());
+			String binary = Integer.toBinaryString(label.intValue());
 			byte[] bytes = binary.getBytes();
 			double[] encode = new double[n];
 			int j = n;
@@ -222,12 +220,12 @@ public class Dataset {
 				1 });
 		int[] encode = r.getEncodeTarget(4);
 
-		System.out.println(r.lable);
+		System.out.println(r.label);
 		System.out.println(Arrays.toString(encode));
 	}
 
 	/**
-	 * »ñÈ¡µÚindexÌõ¼ÇÂ¼
+	 * ï¿½ï¿½È¡ï¿½ï¿½indexï¿½ï¿½ï¿½ï¿½Â¼
 	 * 
 	 * @param index
 	 * @return
