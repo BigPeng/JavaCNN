@@ -1,16 +1,19 @@
 package edu.hitsz.c102c.cnn;
 
+import java.io.IOException;
+
 import edu.hitsz.c102c.cnn.CNN.LayerBuilder;
 import edu.hitsz.c102c.cnn.Layer.Size;
 import edu.hitsz.c102c.dataset.Dataset;
+import edu.hitsz.c102c.dataset.DatasetLoader;
 import edu.hitsz.c102c.util.ConcurenceRunner;
 import edu.hitsz.c102c.util.TimedTest;
 import edu.hitsz.c102c.util.TimedTest.TestTask;
 
 public class RunCNN {
 
-	public static void runCnn() {
-		//´´½¨Ò»¸ö¾í»ýÉñ¾­ÍøÂç
+	public static void runCnn() throws IOException {
+		//ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		LayerBuilder builder = new LayerBuilder();
 		builder.addLayer(Layer.buildInputLayer(new Size(28, 28)));
 		builder.addLayer(Layer.buildConvLayer(6, new Size(5, 5)));
@@ -19,19 +22,19 @@ public class RunCNN {
 		builder.addLayer(Layer.buildSampLayer(new Size(2, 2)));
 		builder.addLayer(Layer.buildOutputLayer(10));
 		CNN cnn = new CNN(builder, 50);
-		
-		//µ¼ÈëÊý¾Ý¼¯
+
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¼ï¿½
 		String fileName = "dataset/train.format";
-		Dataset dataset = Dataset.load(fileName, ",", 784);
+		Dataset dataset = DatasetLoader.load(fileName, ",", 784);
 		cnn.train(dataset, 3);//
 		String modelName = "model/model.cnn";
-		cnn.saveModel(modelName);		
+		cnn.saveModel(modelName);
 		dataset.clear();
 		dataset = null;
-		
-		//Ô¤²â
+
+		//Ô¤ï¿½ï¿½
 		// CNN cnn = CNN.loadModel(modelName);	
-		Dataset testset = Dataset.load("dataset/test.format", ",", -1);
+		Dataset testset = DatasetLoader.load("dataset/test.format", ",", -1);
 		cnn.predict(testset, "dataset/test.predict");
 	}
 
@@ -41,7 +44,11 @@ public class RunCNN {
 
 			@Override
 			public void process() {
-				runCnn();
+				try {
+					runCnn();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
 			}
 		}, 1).test();
 		ConcurenceRunner.stop();

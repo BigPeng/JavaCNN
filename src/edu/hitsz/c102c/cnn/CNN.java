@@ -24,7 +24,7 @@ import edu.hitsz.c102c.util.Util.Operator;
 
 public class CNN implements Serializable {
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 337920299147929932L;
 	private static double ALPHA = 0.85;
@@ -47,13 +47,10 @@ public class CNN implements Serializable {
 
 	/**
 	 * ��ʼ������
-	 * 
-	 * @param layerBuilder
-	 *            �����
-	 * @param inputMapSize
-	 *            ����map�Ĵ�С
-	 * @param classNum
-	 *            ���ĸ�����Ҫ�����ݼ������ת��Ϊ0-classNum-1����ֵ
+	 *
+	 * @param layerBuilder �����
+	 * @param inputMapSize ����map�Ĵ�С
+	 * @param classNum     ���ĸ�����Ҫ�����ݼ������ת��Ϊ0-classNum-1����ֵ
 	 */
 	public CNN(LayerBuilder layerBuilder, final int batchSize) {
 		layers = layerBuilder.mLayers;
@@ -103,10 +100,9 @@ public class CNN implements Serializable {
 
 	/**
 	 * ��ѵ������ѵ������
-	 * 
+	 *
 	 * @param trainset
-	 * @param repeat
-	 *            �����Ĵ���
+	 * @param repeat   �����Ĵ���
 	 */
 	public void train(Dataset trainset, int repeat) {
 		// ����ֹͣ��ť
@@ -177,7 +173,7 @@ public class CNN implements Serializable {
 
 	/**
 	 * ��������
-	 * 
+	 *
 	 * @param trainset
 	 * @return
 	 */
@@ -189,14 +185,14 @@ public class CNN implements Serializable {
 			Record record = iter.next();
 			forward(record);
 			Layer outputLayer = layers.get(layerNum - 1);
-			int mapNum = outputLayer.getOutMapNum();		
+			int mapNum = outputLayer.getOutMapNum();
 			double[] out = new double[mapNum];
 			for (int m = 0; m < mapNum; m++) {
 				double[][] outmap = outputLayer.getMap(m);
 				out[m] = outmap[0][0];
 			}
-			if (record.getLable().intValue() == Util.getMaxIndex(out))
-				right++;		
+			if (record.getLabel().intValue() == Util.getMaxIndex(out))
+				right++;
 		}
 		double p = 1.0 * right / trainset.size();
 		Log.i("precision", p + "");
@@ -205,7 +201,7 @@ public class CNN implements Serializable {
 
 	/**
 	 * Ԥ����
-	 * 
+	 *
 	 * @param testset
 	 * @param fileName
 	 */
@@ -256,7 +252,7 @@ public class CNN implements Serializable {
 
 	/**
 	 * ѵ��һ����¼��ͬʱ�����Ƿ�Ԥ����ȷ��ǰ��¼
-	 * 
+	 *
 	 * @param record
 	 * @return
 	 */
@@ -284,20 +280,20 @@ public class CNN implements Serializable {
 			Layer layer = layers.get(l);
 			Layer lastLayer = layers.get(l - 1);
 			switch (layer.getType()) {
-			case conv:
-			case output:
-				updateKernels(layer, lastLayer);
-				updateBias(layer, lastLayer);
-				break;
-			default:
-				break;
+				case conv:
+				case output:
+					updateKernels(layer, lastLayer);
+					updateBias(layer, lastLayer);
+					break;
+				default:
+					break;
 			}
 		}
 	}
 
 	/**
 	 * ����ƫ��
-	 * 
+	 *
 	 * @param layer
 	 * @param lastLayer
 	 */
@@ -323,11 +319,9 @@ public class CNN implements Serializable {
 
 	/**
 	 * ����layer��ľ���ˣ�Ȩ�أ���ƫ��
-	 * 
-	 * @param layer
-	 *            ��ǰ��
-	 * @param lastLayer
-	 *            ǰһ��
+	 *
+	 * @param layer     ��ǰ��
+	 * @param lastLayer ǰһ��
 	 */
 	private void updateKernels(final Layer layer, final Layer lastLayer) {
 		int mapNum = layer.getOutMapNum();
@@ -376,21 +370,21 @@ public class CNN implements Serializable {
 			Layer layer = layers.get(l);
 			Layer nextLayer = layers.get(l + 1);
 			switch (layer.getType()) {
-			case samp:
-				setSampErrors(layer, nextLayer);
-				break;
-			case conv:
-				setConvErrors(layer, nextLayer);
-				break;
-			default:// ֻ�в�����;������Ҫ����в�����û�вв������Ѿ������
-				break;
+				case samp:
+					setSampErrors(layer, nextLayer);
+					break;
+				case conv:
+					setConvErrors(layer, nextLayer);
+					break;
+				default:// ֻ�в�����;������Ҫ����в�����û�вв������Ѿ������
+					break;
 			}
 		}
 	}
 
 	/**
 	 * ���ò�����Ĳв�
-	 * 
+	 *
 	 * @param layer
 	 * @param nextLayer
 	 */
@@ -426,7 +420,7 @@ public class CNN implements Serializable {
 
 	/**
 	 * ���þ����Ĳв�
-	 * 
+	 *
 	 * @param layer
 	 * @param nextLayer
 	 */
@@ -460,7 +454,7 @@ public class CNN implements Serializable {
 
 	/**
 	 * ���������Ĳв�ֵ,�������񾭵�Ԫ�������٣��ݲ����Ƕ��߳�
-	 * 
+	 *
 	 * @param record
 	 * @return
 	 */
@@ -491,7 +485,7 @@ public class CNN implements Serializable {
 			outmaps[m] = outmap[0][0];
 
 		}
-		int label = record.getLable().intValue();
+		int label = record.getLabel().intValue();
 		target[label] = 1;
 		// Log.i(record.getLable() + "outmaps:" +
 		// Util.fomart(outmaps)
@@ -505,7 +499,7 @@ public class CNN implements Serializable {
 
 	/**
 	 * ǰ�����һ����¼
-	 * 
+	 *
 	 * @param record
 	 */
 	private void forward(Record record) {
@@ -515,24 +509,24 @@ public class CNN implements Serializable {
 			Layer layer = layers.get(l);
 			Layer lastLayer = layers.get(l - 1);
 			switch (layer.getType()) {
-			case conv:// ������������
-				setConvOutput(layer, lastLayer);
-				break;
-			case samp:// �������������
-				setSampOutput(layer, lastLayer);
-				break;
-			case output:// �������������,�������һ������ľ����
-				setConvOutput(layer, lastLayer);
-				break;
-			default:
-				break;
+				case conv:// ������������
+					setConvOutput(layer, lastLayer);
+					break;
+				case samp:// �������������
+					setSampOutput(layer, lastLayer);
+					break;
+				case output:// �������������,�������һ������ľ����
+					setConvOutput(layer, lastLayer);
+					break;
+				default:
+					break;
 			}
 		}
 	}
 
 	/**
 	 * ���ݼ�¼ֵ���������������ֵ
-	 * 
+	 *
 	 * @param record
 	 */
 	private void setInLayerOutput(Record record) {
@@ -592,7 +586,7 @@ public class CNN implements Serializable {
 
 	/**
 	 * ���ò���������ֵ���������ǶԾ����ľ�ֵ����
-	 * 
+	 *
 	 * @param layer
 	 * @param lastLayer
 	 */
@@ -618,9 +612,8 @@ public class CNN implements Serializable {
 
 	/**
 	 * ����cnn�����ÿһ��Ĳ���
-	 * 
-	 * @param batchSize
-	 *            * @param classNum
+	 *
+	 * @param batchSize    * @param classNum
 	 * @param inputMapSize
 	 */
 	public void setup(int batchSize) {
@@ -632,53 +625,53 @@ public class CNN implements Serializable {
 			Layer frontLayer = layers.get(i - 1);
 			int frontMapNum = frontLayer.getOutMapNum();
 			switch (layer.getType()) {
-			case input:
-				break;
-			case conv:
-				// ����map�Ĵ�С
-				layer.setMapSize(frontLayer.getMapSize().subtract(
-						layer.getKernelSize(), 1));
-				// ��ʼ������ˣ�����frontMapNum*outMapNum�������
+				case input:
+					break;
+				case conv:
+					// ����map�Ĵ�С
+					layer.setMapSize(frontLayer.getMapSize().subtract(
+							layer.getKernelSize(), 1));
+					// ��ʼ������ˣ�����frontMapNum*outMapNum�������
 
-				layer.initKernel(frontMapNum);
-				// ��ʼ��ƫ�ã�����frontMapNum*outMapNum��ƫ��
-				layer.initBias(frontMapNum);
-				// batch��ÿ����¼��Ҫ����һ�ݲв�
-				layer.initErros(batchSize);
-				// ÿһ�㶼��Ҫ��ʼ�����map
-				layer.initOutmaps(batchSize);
-				break;
-			case samp:
-				// �������map��������һ����ͬ
-				layer.setOutMapNum(frontMapNum);
-				// ������map�Ĵ�С����һ��map�Ĵ�С����scale��С
-				layer.setMapSize(frontLayer.getMapSize().divide(
-						layer.getScaleSize()));
-				// batch��ÿ����¼��Ҫ����һ�ݲв�
-				layer.initErros(batchSize);
-				// ÿһ�㶼��Ҫ��ʼ�����map
-				layer.initOutmaps(batchSize);
-				break;
-			case output:
-				// ��ʼ��Ȩ�أ�����ˣ��������ľ���˴�СΪ��һ���map��С
-				layer.initOutputKerkel(frontMapNum, frontLayer.getMapSize());
-				// ��ʼ��ƫ�ã�����frontMapNum*outMapNum��ƫ��
-				layer.initBias(frontMapNum);
-				// batch��ÿ����¼��Ҫ����һ�ݲв�
-				layer.initErros(batchSize);
-				// ÿһ�㶼��Ҫ��ʼ�����map
-				layer.initOutmaps(batchSize);
-				break;
+					layer.initKernel(frontMapNum);
+					// ��ʼ��ƫ�ã�����frontMapNum*outMapNum��ƫ��
+					layer.initBias(frontMapNum);
+					// batch��ÿ����¼��Ҫ����һ�ݲв�
+					layer.initErros(batchSize);
+					// ÿһ�㶼��Ҫ��ʼ�����map
+					layer.initOutmaps(batchSize);
+					break;
+				case samp:
+					// �������map��������һ����ͬ
+					layer.setOutMapNum(frontMapNum);
+					// ������map�Ĵ�С����һ��map�Ĵ�С����scale��С
+					layer.setMapSize(frontLayer.getMapSize().divide(
+							layer.getScaleSize()));
+					// batch��ÿ����¼��Ҫ����һ�ݲв�
+					layer.initErros(batchSize);
+					// ÿһ�㶼��Ҫ��ʼ�����map
+					layer.initOutmaps(batchSize);
+					break;
+				case output:
+					// ��ʼ��Ȩ�أ�����ˣ��������ľ���˴�СΪ��һ���map��С
+					layer.initOutputKerkel(frontMapNum, frontLayer.getMapSize());
+					// ��ʼ��ƫ�ã�����frontMapNum*outMapNum��ƫ��
+					layer.initBias(frontMapNum);
+					// batch��ÿ����¼��Ҫ����һ�ݲв�
+					layer.initErros(batchSize);
+					// ÿһ�㶼��Ҫ��ʼ�����map
+					layer.initOutmaps(batchSize);
+					break;
 			}
 		}
 	}
 
 	/**
 	 * ������ģʽ�������,Ҫ�����ڶ������Ϊ�����������Ϊ�����
-	 * 
+	 *
 	 * @author jiqunpeng
-	 * 
-	 *         ����ʱ�䣺2014-7-8 ����4:54:29
+	 * <p>
+	 * ����ʱ�䣺2014-7-8 ����4:54:29
 	 */
 	public static class LayerBuilder {
 		private List<Layer> mLayers;
@@ -700,7 +693,7 @@ public class CNN implements Serializable {
 
 	/**
 	 * ���л�����ģ��
-	 * 
+	 *
 	 * @param fileName
 	 */
 	public void saveModel(String fileName) {
@@ -718,7 +711,7 @@ public class CNN implements Serializable {
 
 	/**
 	 * �����л�����ģ��
-	 * 
+	 *
 	 * @param fileName
 	 * @return
 	 */

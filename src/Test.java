@@ -1,6 +1,9 @@
+import java.io.IOException;
+
 import edu.hitsz.c102c.cnn.CNN;
 import edu.hitsz.c102c.cnn.Layer;
 import edu.hitsz.c102c.dataset.Dataset;
+import edu.hitsz.c102c.dataset.DatasetLoader;
 
 /**
  * <p/>
@@ -8,24 +11,24 @@ import edu.hitsz.c102c.dataset.Dataset;
  *
  * @author Ralf Th. Pietsch &lt;ratopi@abwesend.de&gt;
  */
-public class Test
-{
-	public static void main( final String[] args )
-	{
+public class Test {
+	public static void main(final String[] args) throws IOException {
+
 		final CNN.LayerBuilder builder = new CNN.LayerBuilder();
-		builder.addLayer( Layer.buildInputLayer( new Layer.Size( 28, 28 ) ) );
-		builder.addLayer( Layer.buildConvLayer( 6, new Layer.Size( 5, 5 ) ) );
-		builder.addLayer( Layer.buildSampLayer( new Layer.Size( 2, 2 ) ) );
-		builder.addLayer( Layer.buildConvLayer( 12, new Layer.Size( 5, 5 ) ) );
-		builder.addLayer( Layer.buildSampLayer( new Layer.Size( 2, 2 ) ) );
-		builder.addLayer( Layer.buildOutputLayer( 10 ) );
-		final CNN cnn = new CNN( builder, 50 );
+		builder.addLayer(Layer.buildInputLayer(new Layer.Size(28, 28)));
+		builder.addLayer(Layer.buildConvLayer(6, new Layer.Size(5, 5)));
+		builder.addLayer(Layer.buildSampLayer(new Layer.Size(2, 2)));
+		builder.addLayer(Layer.buildConvLayer(12, new Layer.Size(5, 5)));
+		builder.addLayer(Layer.buildSampLayer(new Layer.Size(2, 2)));
+		builder.addLayer(Layer.buildOutputLayer(10));
+
+		final CNN cnn = new CNN(builder, 50);
 
 		final String fileName = "dataset/train.format";
-		final Dataset dataset = Dataset.load( fileName, ",", 784 );
-		cnn.train( dataset, 100 );
+		final Dataset dataset = DatasetLoader.load(fileName, ",", 784);
+		cnn.train(dataset, 100);
 
-		final Dataset testset = Dataset.load( "dataset/test.format", ",", -1 );
-		cnn.predict( testset, "dataset/test.predict" );
+		final Dataset testset = DatasetLoader.load("dataset/test.format", ",", -1);
+		cnn.predict(testset, "dataset/test.predict");
 	}
 }
