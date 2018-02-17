@@ -1,15 +1,10 @@
 package edu.hitsz.c102c.cnn;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,35 +18,27 @@ import edu.hitsz.c102c.util.Util;
 import edu.hitsz.c102c.util.Util.Operator;
 
 public class CNN implements Serializable {
-	/**
-	 *
-	 */
+
 	private static final long serialVersionUID = 337920299147929932L;
+
+	private static final double LAMBDA = 0;
+
 	private static double ALPHA = 0.85;
-	protected static final double LAMBDA = 0;
-	// ����ĸ���
+
+
 	private List<Layer> layers;
-	// ����
+
 	private int layerNum;
 
-	// �������µĴ�С
 	private int batchSize;
-	// �������������Ծ����ÿһ��Ԫ�س���һ��ֵ
+
 	private Operator divide_batchSize;
 
-	// �������������Ծ����ÿһ��Ԫ�س���alphaֵ
 	private Operator multiply_alpha;
 
-	// �������������Ծ����ÿһ��Ԫ�س���1-labmda*alphaֵ
 	private Operator multiply_lambda;
 
-	/**
-	 * ��ʼ������
-	 *
-	 * @param layerBuilder �����
-	 * @param inputMapSize ����map�Ĵ�С
-	 * @param classNum     ���ĸ�����Ҫ�����ݼ������ת��Ϊ0-classNum-1����ֵ
-	 */
+
 	public CNN(LayerBuilder layerBuilder, final int batchSize) {
 		layers = layerBuilder.mLayers;
 		layerNum = layers.size();
@@ -60,63 +47,59 @@ public class CNN implements Serializable {
 		initPerator();
 	}
 
-	/**
-	 * ��ʼ��������
-	 */
 	private void initPerator() {
 		divide_batchSize = new Operator() {
-
 			private static final long serialVersionUID = 7424011281732651055L;
 
 			@Override
 			public double process(double value) {
-				return value / batchSize;
+				return value / batchSize; // TODO: Remove division
 			}
 
 		};
-		multiply_alpha = new Operator() {
 
+		multiply_alpha = new Operator() {
 			private static final long serialVersionUID = 5761368499808006552L;
 
 			@Override
 			public double process(double value) {
-
 				return value * ALPHA;
 			}
 
 		};
-		multiply_lambda = new Operator() {
 
+		multiply_lambda = new Operator() {
 			private static final long serialVersionUID = 4499087728362870577L;
 
 			@Override
 			public double process(double value) {
-
 				return value * (1 - LAMBDA * ALPHA);
 			}
-
 		};
 	}
 
-	/**
-	 * ��ѵ������ѵ������
-	 *
-	 * @param trainset
-	 * @param repeat   �����Ĵ���
-	 */
-	public void train(Dataset trainset, int repeat) {
-		// ����ֹͣ��ť
-		new Lisenter().start();
-		for (int t = 0; t < repeat && !stopTrain.get(); t++) {
+
+	public void train(final Dataset trainset, final int iterationCount) {
+		new Listener().start();
+
+		for (int iteration = 0; iteration < iterationCount && !stopTrain.get(); iteration++) {
+
 			int epochsNum = trainset.size() / batchSize;
-			if (trainset.size() % batchSize != 0)
-				epochsNum++;// ���ȡһ�Σ�������ȡ��
-			Log.i("");
-			Log.i(t + "th iter epochsNum:" + epochsNum);
+
+			if (trainset.size() % batchSize != 0) {
+				epochsNum++;
+			}
+
+			Log.info("");
+			Log.info(iteration + "th iter epochsNum:" + epochsNum);
+
 			int right = 0;
 			int count = 0;
-			for (int i = 0; i < epochsNum; i++) {
+
+			for (int epoch = 0; epoch < epochsNum; epoch++) {
+
 				int[] randPerm = Util.randomPerm(trainset.size(), batchSize);
+
 				Layer.prepareForNewBatch();
 
 				for (int index : randPerm) {
@@ -127,95 +110,102 @@ public class CNN implements Serializable {
 					Layer.prepareForNewRecord();
 				}
 
-				// ����һ��batch�����Ȩ��
 				updateParas();
-				if (i % 50 == 0) {
-					System.out.print("..");
-					if (i + 50 > epochsNum)
+
+				if (epoch % 50 == 0) {
+					System.out.print(".");
+					if (epoch + 50 > epochsNum) {
 						System.out.println();
+					}
 				}
 			}
-			double p = 1.0 * right / count;
-			if (t % 10 == 1 && p > 0.96) {//��̬����׼ѧϰ����
+
+			final double p = 1.0 * right / count;
+
+			if (iteration % 10 == 1 && p > 0.96) {
 				ALPHA = 0.001 + ALPHA * 0.9;
-				Log.i("Set alpha = " + ALPHA);
+				Log.info("Set alpha = " + ALPHA);
 			}
-			Log.i("precision " + right + "/" + count + "=" + p);
+
+			Log.info("precision " + right + "/" + count + "=" + p);
 		}
 	}
 
 	private static AtomicBoolean stopTrain;
 
-	static class Lisenter extends Thread {
-		Lisenter() {
+	static class Listener extends Thread {
+
+		Listener() {
 			setDaemon(true);
 			stopTrain = new AtomicBoolean(false);
 		}
 
 		@Override
 		public void run() {
+
 			System.out.println("Input & to stop train.");
+
 			while (true) {
 				try {
-					int a = System.in.read();
+					final int a = System.in.read();
 					if (a == '&') {
 						stopTrain.compareAndSet(false, true);
 						break;
 					}
 				} catch (IOException e) {
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 			}
-			System.out.println("Lisenter stop");
-		}
 
+			System.out.println("Listener stopped");
+		}
 	}
 
-	/**
-	 * ��������
-	 *
-	 * @param trainset
-	 * @return
-	 */
-	public double test(Dataset trainset) {
+	public double test(final Dataset dataset) {
 		Layer.prepareForNewBatch();
-		Iterator<Record> iter = trainset.iter();
+
+		final Iterator<Record> iterator = dataset.iter();
+
 		int right = 0;
-		while (iter.hasNext()) {
-			Record record = iter.next();
+		while (iterator.hasNext()) {
+			final Record record = iterator.next();
+
 			forward(record);
-			Layer outputLayer = layers.get(layerNum - 1);
-			int mapNum = outputLayer.getOutMapNum();
-			double[] out = new double[mapNum];
+
+			final Layer outputLayer = layers.get(layerNum - 1);
+			final int mapNum = outputLayer.getOutMapNum();
+
+			final double[] out = new double[mapNum];
 			for (int m = 0; m < mapNum; m++) {
-				double[][] outmap = outputLayer.getMap(m);
+				final double[][] outmap = outputLayer.getMap(m);
 				out[m] = outmap[0][0];
 			}
-			if (record.getLabel().intValue() == Util.getMaxIndex(out))
+
+			if (record.getLabel().intValue() == Util.getMaxIndex(out)) {
 				right++;
+			}
 		}
-		double p = 1.0 * right / trainset.size();
-		Log.i("precision", p + "");
+		double p = 1.0 * right / dataset.size();
+
+		Log.info("precision", p + "");
+
 		return p;
 	}
 
-	/**
-	 * Ԥ����
-	 *
-	 * @param testset
-	 * @param fileName
-	 */
+	// TODO: Move this method to other/new class (reduce CNN-class to the minimal CNN-logic)
 	public void predict(Dataset testset, String fileName) {
-		Log.i("begin predict");
+		Log.info("begin predict");
 		try {
-			int max = layers.get(layerNum - 1).getClassNum();
-			PrintWriter writer = new PrintWriter(new File(fileName));
+			// final int max = layers.get(layerNum - 1).getClassNum();
+			final PrintWriter writer = new PrintWriter(new File(fileName));
+
 			Layer.prepareForNewBatch();
-			Iterator<Record> iter = testset.iter();
+
+			final Iterator<Record> iter = testset.iter();
 			while (iter.hasNext()) {
-				Record record = iter.next();
+				final Record record = iter.next();
 				forward(record);
-				Layer outputLayer = layers.get(layerNum - 1);
+				final Layer outputLayer = layers.get(layerNum - 1);
 
 				int mapNum = outputLayer.getOutMapNum();
 				double[] out = new double[mapNum];
@@ -236,7 +226,7 @@ public class CNN implements Serializable {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		Log.i("end predict");
+		Log.info("end predict");
 	}
 
 	private boolean isSame(double[] output, double[] target) {
@@ -250,12 +240,6 @@ public class CNN implements Serializable {
 		return r;
 	}
 
-	/**
-	 * ѵ��һ����¼��ͬʱ�����Ƿ�Ԥ����ȷ��ǰ��¼
-	 *
-	 * @param record
-	 * @return
-	 */
 	private boolean train(Record record) {
 		forward(record);
 		boolean result = backPropagation(record);
@@ -263,18 +247,12 @@ public class CNN implements Serializable {
 		// System.exit(0);
 	}
 
-	/*
-	 * ������
-	 */
 	private boolean backPropagation(Record record) {
 		boolean result = setOutLayerErrors(record);
 		setHiddenLayerErrors();
 		return result;
 	}
 
-	/**
-	 * ���²���
-	 */
 	private void updateParas() {
 		for (int l = 1; l < layerNum; l++) {
 			Layer layer = layers.get(l);
@@ -291,12 +269,6 @@ public class CNN implements Serializable {
 		}
 	}
 
-	/**
-	 * ����ƫ��
-	 *
-	 * @param layer
-	 * @param lastLayer
-	 */
 	private void updateBias(final Layer layer, Layer lastLayer) {
 		final double[][][][] errors = layer.getErrors();
 		int mapNum = layer.getOutMapNum();
@@ -317,14 +289,8 @@ public class CNN implements Serializable {
 
 	}
 
-	/**
-	 * ����layer��ľ���ˣ�Ȩ�أ���ƫ��
-	 *
-	 * @param layer     ��ǰ��
-	 * @param lastLayer ǰһ��
-	 */
 	private void updateKernels(final Layer layer, final Layer lastLayer) {
-		int mapNum = layer.getOutMapNum();
+		final int mapNum = layer.getOutMapNum();
 		final int lastMapNum = lastLayer.getOutMapNum();
 		new TaskManager(mapNum) {
 
@@ -332,27 +298,19 @@ public class CNN implements Serializable {
 			public void process(int start, int end) {
 				for (int j = start; j < end; j++) {
 					for (int i = 0; i < lastMapNum; i++) {
-						// ��batch��ÿ����¼delta���
 						double[][] deltaKernel = null;
 						for (int r = 0; r < batchSize; r++) {
-							double[][] error = layer.getError(r, j);
+							final double[][] error = layer.getError(r, j);
 							if (deltaKernel == null)
-								deltaKernel = Util.convnValid(
-										lastLayer.getMap(r, i), error);
-							else {// �ۻ����
-								deltaKernel = Util.matrixOp(Util.convnValid(
-										lastLayer.getMap(r, i), error),
-										deltaKernel, null, null, Util.plus);
+								deltaKernel = Util.convnValid(lastLayer.getMap(r, i), error);
+							else {
+								deltaKernel = Util.matrixOp(Util.convnValid(lastLayer.getMap(r, i), error), deltaKernel, null, null, Util.plus);
 							}
 						}
 
-						// ����batchSize
-						deltaKernel = Util.matrixOp(deltaKernel,
-								divide_batchSize);
-						// ���¾����
-						double[][] kernel = layer.getKernel(i, j);
-						deltaKernel = Util.matrixOp(kernel, deltaKernel,
-								multiply_lambda, multiply_alpha, Util.plus);
+						deltaKernel = Util.matrixOp(deltaKernel, divide_batchSize);
+						final double[][] kernel = layer.getKernel(i, j);
+						deltaKernel = Util.matrixOp(kernel, deltaKernel, multiply_lambda, multiply_alpha, Util.plus);
 						layer.setKernel(i, j, deltaKernel);
 					}
 				}
@@ -362,13 +320,10 @@ public class CNN implements Serializable {
 
 	}
 
-	/**
-	 * �����н�����Ĳв�
-	 */
 	private void setHiddenLayerErrors() {
 		for (int l = layerNum - 2; l > 0; l--) {
-			Layer layer = layers.get(l);
-			Layer nextLayer = layers.get(l + 1);
+			final Layer layer = layers.get(l);
+			final Layer nextLayer = layers.get(l + 1);
 			switch (layer.getType()) {
 				case samp:
 					setSampErrors(layer, nextLayer);
@@ -376,20 +331,14 @@ public class CNN implements Serializable {
 				case conv:
 					setConvErrors(layer, nextLayer);
 					break;
-				default:// ֻ�в�����;������Ҫ����в�����û�вв������Ѿ������
+				default:
 					break;
 			}
 		}
 	}
 
-	/**
-	 * ���ò�����Ĳв�
-	 *
-	 * @param layer
-	 * @param nextLayer
-	 */
 	private void setSampErrors(final Layer layer, final Layer nextLayer) {
-		int mapNum = layer.getOutMapNum();
+		final int mapNum = layer.getOutMapNum();
 		final int nextMapNum = nextLayer.getOutMapNum();
 		new TaskManager(mapNum) {
 
@@ -398,17 +347,12 @@ public class CNN implements Serializable {
 				for (int i = start; i < end; i++) {
 					double[][] sum = null;// ��ÿһ������������
 					for (int j = 0; j < nextMapNum; j++) {
-						double[][] nextError = nextLayer.getError(j);
-						double[][] kernel = nextLayer.getKernel(i, j);
-						// �Ծ���˽���180����ת��Ȼ�����fullģʽ�µþ��
+						final double[][] nextError = nextLayer.getError(j);
+						final double[][] kernel = nextLayer.getKernel(i, j);
 						if (sum == null)
-							sum = Util
-									.convnFull(nextError, Util.rot180(kernel));
+							sum = Util.convnFull(nextError, Util.rot180(kernel));
 						else
-							sum = Util.matrixOp(
-									Util.convnFull(nextError,
-											Util.rot180(kernel)), sum, null,
-									null, Util.plus);
+							sum = Util.matrixOp(Util.convnFull(nextError, Util.rot180(kernel)), sum, null, null, Util.plus);
 					}
 					layer.setError(i, sum);
 				}
@@ -418,46 +362,23 @@ public class CNN implements Serializable {
 
 	}
 
-	/**
-	 * ���þ����Ĳв�
-	 *
-	 * @param layer
-	 * @param nextLayer
-	 */
 	private void setConvErrors(final Layer layer, final Layer nextLayer) {
-		// ��������һ��Ϊ�����㣬�������map������ͬ����һ��mapֻ����һ���һ��map���ӣ�
-		// ���ֻ�轫��һ��Ĳв�kronecker��չ���õ������
-		int mapNum = layer.getOutMapNum();
+		final int mapNum = layer.getOutMapNum();
 		new TaskManager(mapNum) {
-
 			@Override
 			public void process(int start, int end) {
 				for (int m = start; m < end; m++) {
-					Size scale = nextLayer.getScaleSize();
-					double[][] nextError = nextLayer.getError(m);
-					double[][] map = layer.getMap(m);
-					// ������ˣ����Եڶ��������ÿ��Ԫ��value����1-value����
-					double[][] outMatrix = Util.matrixOp(map,
-							Util.cloneMatrix(map), null, Util.one_value,
-							Util.multiply);
-					outMatrix = Util.matrixOp(outMatrix,
-							Util.kronecker(nextError, scale), null, null,
-							Util.multiply);
+					final Size scale = nextLayer.getScaleSize();
+					final double[][] nextError = nextLayer.getError(m);
+					final double[][] map = layer.getMap(m);
+					double[][] outMatrix = Util.matrixOp(map, Util.cloneMatrix(map), null, Util.one_value, Util.multiply);
+					outMatrix = Util.matrixOp(outMatrix, Util.kronecker(nextError, scale), null, null, Util.multiply);
 					layer.setError(m, outMatrix);
 				}
-
 			}
-
 		}.start();
-
 	}
 
-	/**
-	 * ���������Ĳв�ֵ,�������񾭵�Ԫ�������٣��ݲ����Ƕ��߳�
-	 *
-	 * @param record
-	 * @return
-	 */
 	private boolean setOutLayerErrors(Record record) {
 
 		Layer outputLayer = layers.get(layerNum - 1);
@@ -478,206 +399,176 @@ public class CNN implements Serializable {
 		// return true;
 		// return false;
 
-		double[] target = new double[mapNum];
-		double[] outmaps = new double[mapNum];
-		for (int m = 0; m < mapNum; m++) {
-			double[][] outmap = outputLayer.getMap(m);
-			outmaps[m] = outmap[0][0];
+		final double[] target = new double[mapNum];
+		final double[] outmaps = new double[mapNum];
 
+		for (int m = 0; m < mapNum; m++) {
+			final double[][] outmap = outputLayer.getMap(m);
+			outmaps[m] = outmap[0][0];
 		}
-		int label = record.getLabel().intValue();
+
+		final int label = record.getLabel().intValue();
+
 		target[label] = 1;
+
 		// Log.i(record.getLable() + "outmaps:" +
 		// Util.fomart(outmaps)
 		// + Arrays.toString(target));
+
 		for (int m = 0; m < mapNum; m++) {
-			outputLayer.setError(m, 0, 0, outmaps[m] * (1 - outmaps[m])
-					* (target[m] - outmaps[m]));
+			outputLayer.setError(m, 0, 0, outmaps[m] * (1 - outmaps[m]) * (target[m] - outmaps[m]));
 		}
+
 		return label == Util.getMaxIndex(outmaps);
 	}
 
-	/**
-	 * ǰ�����һ����¼
-	 *
-	 * @param record
-	 */
 	private void forward(Record record) {
-		// ����������map
 		setInLayerOutput(record);
+
 		for (int l = 1; l < layers.size(); l++) {
-			Layer layer = layers.get(l);
-			Layer lastLayer = layers.get(l - 1);
+			final Layer layer = layers.get(l);
+			final Layer lastLayer = layers.get(l - 1);
+
 			switch (layer.getType()) {
-				case conv:// ������������
+				case conv:
 					setConvOutput(layer, lastLayer);
 					break;
-				case samp:// �������������
+
+				case samp:
 					setSampOutput(layer, lastLayer);
 					break;
-				case output:// �������������,�������һ������ľ����
+
+				case output:
 					setConvOutput(layer, lastLayer);
 					break;
+
 				default:
 					break;
 			}
 		}
 	}
 
-	/**
-	 * ���ݼ�¼ֵ���������������ֵ
-	 *
-	 * @param record
-	 */
 	private void setInLayerOutput(Record record) {
 		final Layer inputLayer = layers.get(0);
 		final Size mapSize = inputLayer.getMapSize();
+
 		final double[] attr = record.getAttrs();
-		if (attr.length != mapSize.x * mapSize.y)
-			throw new RuntimeException("���ݼ�¼�Ĵ�С�붨���map��С��һ��!");
+
+		if (attr.length != mapSize.x * mapSize.y) {
+			throw new RuntimeException("The size of the data record does not match the size of the map defined!");
+		}
+
 		for (int i = 0; i < mapSize.x; i++) {
 			for (int j = 0; j < mapSize.y; j++) {
-				// ����¼���Ե�һά����Ū�ɶ�ά����
 				inputLayer.setMapValue(0, i, j, attr[mapSize.x * i + j]);
 			}
 		}
 	}
 
-	/*
-	 * �����������ֵ,ÿ���̸߳���һ����map
+	/**
+	 * Compute the output of the convolutional layer, each thread is responsible for part of the map
 	 */
 	private void setConvOutput(final Layer layer, final Layer lastLayer) {
-		int mapNum = layer.getOutMapNum();
+		final int mapNum = layer.getOutMapNum();
 		final int lastMapNum = lastLayer.getOutMapNum();
 		new TaskManager(mapNum) {
 
 			@Override
 			public void process(int start, int end) {
 				for (int j = start; j < end; j++) {
-					double[][] sum = null;// ��ÿһ������map�ľ���������
+					double[][] sum = null;
 					for (int i = 0; i < lastMapNum; i++) {
 						double[][] lastMap = lastLayer.getMap(i);
 						double[][] kernel = layer.getKernel(i, j);
-						if (sum == null)
+						if (sum == null) {
 							sum = Util.convnValid(lastMap, kernel);
-						else
-							sum = Util.matrixOp(
-									Util.convnValid(lastMap, kernel), sum,
-									null, null, Util.plus);
+						} else {
+							sum = Util.matrixOp(Util.convnValid(lastMap, kernel), sum, null, null, Util.plus);
+						}
 					}
 					final double bias = layer.getBias(j);
-					sum = Util.matrixOp(sum, new Operator() {
-						private static final long serialVersionUID = 2469461972825890810L;
+					sum = Util
+							.matrixOp(
+									sum,
+									new Operator() {
+										private static final long serialVersionUID = 2469461972825890810L;
 
-						@Override
-						public double process(double value) {
-							return Util.sigmod(value + bias);
-						}
-
-					});
+										@Override
+										public double process(double value) {
+											return Util.sigmod(value + bias);
+										}
+									}
+							);
 
 					layer.setMapValue(j, sum);
 				}
 			}
-
 		}.start();
-
 	}
 
-	/**
-	 * ���ò���������ֵ���������ǶԾ����ľ�ֵ����
-	 *
-	 * @param layer
-	 * @param lastLayer
-	 */
 	private void setSampOutput(final Layer layer, final Layer lastLayer) {
-		int lastMapNum = lastLayer.getOutMapNum();
-		new TaskManager(lastMapNum) {
+		final int lastMapNum = lastLayer.getOutMapNum();
 
+		new TaskManager(lastMapNum) {
 			@Override
 			public void process(int start, int end) {
 				for (int i = start; i < end; i++) {
-					double[][] lastMap = lastLayer.getMap(i);
-					Size scaleSize = layer.getScaleSize();
-					// ��scaleSize������о�ֵ����
-					double[][] sampMatrix = Util
-							.scaleMatrix(lastMap, scaleSize);
+					final double[][] lastMap = lastLayer.getMap(i);
+					final Size scaleSize = layer.getScaleSize();
+					final double[][] sampMatrix = Util.scaleMatrix(lastMap, scaleSize);
 					layer.setMapValue(i, sampMatrix);
 				}
 			}
-
 		}.start();
 
 	}
 
-	/**
-	 * ����cnn�����ÿһ��Ĳ���
-	 *
-	 * @param batchSize    * @param classNum
-	 * @param inputMapSize
-	 */
-	public void setup(int batchSize) {
-		Layer inputLayer = layers.get(0);
-		// ÿһ�㶼��Ҫ��ʼ�����map
+	private void setup(int batchSize) {
+		final Layer inputLayer = layers.get(0);
+
 		inputLayer.initOutmaps(batchSize);
+
 		for (int i = 1; i < layers.size(); i++) {
-			Layer layer = layers.get(i);
-			Layer frontLayer = layers.get(i - 1);
-			int frontMapNum = frontLayer.getOutMapNum();
+
+			final Layer layer = layers.get(i);
+			final Layer frontLayer = layers.get(i - 1);
+
+			final int frontMapNum = frontLayer.getOutMapNum();
 			switch (layer.getType()) {
 				case input:
 					break;
 				case conv:
-					// ����map�Ĵ�С
-					layer.setMapSize(frontLayer.getMapSize().subtract(
-							layer.getKernelSize(), 1));
-					// ��ʼ������ˣ�����frontMapNum*outMapNum�������
-
+					layer.setMapSize(frontLayer.getMapSize().subtract(layer.getKernelSize(), 1));
 					layer.initKernel(frontMapNum);
-					// ��ʼ��ƫ�ã�����frontMapNum*outMapNum��ƫ��
 					layer.initBias(frontMapNum);
-					// batch��ÿ����¼��Ҫ����һ�ݲв�
 					layer.initErros(batchSize);
-					// ÿһ�㶼��Ҫ��ʼ�����map
 					layer.initOutmaps(batchSize);
 					break;
+
 				case samp:
-					// �������map��������һ����ͬ
 					layer.setOutMapNum(frontMapNum);
-					// ������map�Ĵ�С����һ��map�Ĵ�С����scale��С
-					layer.setMapSize(frontLayer.getMapSize().divide(
-							layer.getScaleSize()));
-					// batch��ÿ����¼��Ҫ����һ�ݲв�
+					layer.setMapSize(frontLayer.getMapSize().divide(layer.getScaleSize()));
 					layer.initErros(batchSize);
-					// ÿһ�㶼��Ҫ��ʼ�����map
 					layer.initOutmaps(batchSize);
 					break;
+
 				case output:
-					// ��ʼ��Ȩ�أ�����ˣ��������ľ���˴�СΪ��һ���map��С
 					layer.initOutputKerkel(frontMapNum, frontLayer.getMapSize());
-					// ��ʼ��ƫ�ã�����frontMapNum*outMapNum��ƫ��
 					layer.initBias(frontMapNum);
-					// batch��ÿ����¼��Ҫ����һ�ݲв�
 					layer.initErros(batchSize);
-					// ÿһ�㶼��Ҫ��ʼ�����map
 					layer.initOutmaps(batchSize);
 					break;
 			}
 		}
 	}
 
-	/**
-	 * ������ģʽ�������,Ҫ�����ڶ������Ϊ�����������Ϊ�����
-	 *
-	 * @author jiqunpeng
-	 * <p>
-	 * ����ʱ�䣺2014-7-8 ����4:54:29
-	 */
+	// === inner classes ===
+
 	public static class LayerBuilder {
 		private List<Layer> mLayers;
 
 		public LayerBuilder() {
-			mLayers = new ArrayList<Layer>();
+			mLayers = new ArrayList<>();
 		}
 
 		public LayerBuilder(Layer layer) {
@@ -691,40 +582,4 @@ public class CNN implements Serializable {
 		}
 	}
 
-	/**
-	 * ���л�����ģ��
-	 *
-	 * @param fileName
-	 */
-	public void saveModel(String fileName) {
-		try {
-			ObjectOutputStream oos = new ObjectOutputStream(
-					new FileOutputStream(fileName));
-			oos.writeObject(this);
-			oos.flush();
-			oos.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	/**
-	 * �����л�����ģ��
-	 *
-	 * @param fileName
-	 * @return
-	 */
-	public static CNN loadModel(String fileName) {
-		try {
-			ObjectInputStream in = new ObjectInputStream(new FileInputStream(
-					fileName));
-			CNN cnn = (CNN) in.readObject();
-			in.close();
-			return cnn;
-		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
 }

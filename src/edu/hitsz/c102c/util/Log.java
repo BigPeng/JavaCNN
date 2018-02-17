@@ -3,13 +3,13 @@ package edu.hitsz.c102c.util;
 import java.io.PrintStream;
 
 public class Log {
-	static PrintStream stream = System.out;
-	
-	public static void i(String tag,String msg){
-		stream.println(tag+"\t"+msg);
+	private static final PrintStream stream = System.out;
+
+	public static void info(String tag, String msg) {
+		stream.println(tag + "\t" + msg);
 	}
-	
-	public static void i(String msg){
+
+	public static void info(String msg) {
 		stream.println(msg);
 	}
 
