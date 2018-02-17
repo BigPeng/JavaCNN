@@ -23,34 +23,35 @@ public class CNN implements Serializable {
 	private static double ALPHA = 0.85;
 
 
-	private List<Layer> layers;
+	private final List<Layer> layers;
 
-	private int layerNum;
+	private final int layerNum;
 
-	private int batchSize;
+	private final int batchSize;
 
-	private Util.Operator divide_batchSize;
+	private final Util.Operator divide_batchSize;
 
-	private Util.Operator multiply_alpha;
+	private final Util.Operator multiply_alpha;
 
-	private Util.Operator multiply_lambda;
+	private final Util.Operator multiply_lambda;
 
 
 	public CNN(LayerBuilder layerBuilder, final int batchSize) {
-		layers = layerBuilder.mLayers;
-		layerNum = layers.size();
+		this.layers = layerBuilder.mLayers;
+		this.layerNum = layers.size();
 		this.batchSize = batchSize;
 		setup(batchSize);
-		initPerator();
-	}
 
-	private void initPerator() {
+		// ---
+
+		final double _1_batchSize = 1. / batchSize;
+
 		divide_batchSize = new Util.Operator() {
 			private static final long serialVersionUID = 7424011281732651055L;
 
 			@Override
 			public double process(double value) {
-				return value / batchSize; // TODO: Remove division
+				return value * _1_batchSize;
 			}
 
 		};
@@ -169,14 +170,7 @@ public class CNN implements Serializable {
 
 			forward(record);
 
-			final Layer outputLayer = layers.get(layerNum - 1);
-			final int mapNum = outputLayer.getOutMapNum();
-
-			final double[] out = new double[mapNum];
-			for (int m = 0; m < mapNum; m++) {
-				final double[][] outmap = outputLayer.getMap(m);
-				out[m] = outmap[0][0];
-			}
+			final double[] out = getOutput();
 
 			if (record.getLabel().intValue() == Util.getMaxIndex(out)) {
 				right++;
@@ -187,6 +181,18 @@ public class CNN implements Serializable {
 		Log.info("precision", p + "");
 
 		return p;
+	}
+
+	private double[] getOutput() {
+		final Layer outputLayer = layers.get(layerNum - 1);
+
+		final int mapNum = outputLayer.getOutMapNum();
+		final double[] out = new double[mapNum];
+		for (int m = 0; m < mapNum; m++) {
+			final double[][] outmap = outputLayer.getMap(m);
+			out[m] = outmap[0][0];
+		}
+		return out;
 	}
 
 	// TODO: Move this method to other/new class (reduce CNN-class to the minimal CNN-logic)
@@ -202,17 +208,10 @@ public class CNN implements Serializable {
 			while (iter.hasNext()) {
 				final Dataset.Record record = iter.next();
 				forward(record);
-				final Layer outputLayer = layers.get(layerNum - 1);
-
-				int mapNum = outputLayer.getOutMapNum();
-				double[] out = new double[mapNum];
-				for (int m = 0; m < mapNum; m++) {
-					double[][] outmap = outputLayer.getMap(m);
-					out[m] = outmap[0][0];
-				}
+				final double[] out = getOutput();
 				// int label =
 				// Util.binaryArray2int(out);
-				int label = Util.getMaxIndex(out);
+				final int label = Util.getMaxIndex(out);
 				// if (label >= max)
 				// label = label - (1 << (out.length -
 				// 1));
@@ -520,7 +519,7 @@ public class CNN implements Serializable {
 
 	}
 
-	private void setup(int batchSize) {
+	private void setup(final int batchSize) {
 		final Layer inputLayer = layers.get(0);
 
 		inputLayer.initOutmaps(batchSize);
