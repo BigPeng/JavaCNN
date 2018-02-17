@@ -1,9 +1,5 @@
-bin/
-*.class
-*MyTest.java
-data/
-model/
-/.classpath
-/.project
 *.iml
 /.idea
+/.classpath
+/.project
+/target/
