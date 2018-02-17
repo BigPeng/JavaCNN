@@ -3,3 +3,7 @@ bin/
 *MyTest.java
 data/
 model/
+/.classpath
+/.project
+*.iml
+/.idea
