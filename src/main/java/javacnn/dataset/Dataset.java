@@ -1,4 +1,4 @@
-package edu.hitsz.c102c.dataset;
+package javacnn.dataset;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,9 +1,9 @@
-package edu.hitsz.c102c.cnn;
+package javacnn.cnn;
 
 import java.io.Serializable;
 
-import edu.hitsz.c102c.util.Log;
-import edu.hitsz.c102c.util.Util;
+import javacnn.util.Log;
+import javacnn.util.Util;
 
 /**
  * cnn����Ĳ�

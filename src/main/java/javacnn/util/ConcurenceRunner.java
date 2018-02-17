@@ -1,15 +1,15 @@
-package edu.hitsz.c102c.util;
+package javacnn.util;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * ²¢·¢ÔËÐÐ¹¤¾ß
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½
  * 
  * @author jiqunpeng
  * 
- *         ´´½¨Ê±¼ä£º2014-6-16 ÏÂÎç3:33:41
+ *         ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£º2014-6-16 ï¿½ï¿½ï¿½ï¿½3:33:41
  */
 public class ConcurenceRunner {
 
@@ -60,7 +60,7 @@ public class ConcurenceRunner {
 
 		public void start() {
 			int runCpu = cpuNum < workLength ? cpuNum : 1;
-			// ·ÖÆ¬³¤¶ÈÏòÉÏÈ¡Õû
+			// ï¿½ï¿½Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½
 			final CountDownLatch gate = new CountDownLatch(runCpu);
 			int fregLength = (workLength + runCpu - 1) / runCpu;
 			for (int cpu = 0; cpu < runCpu; cpu++) {
@@ -78,7 +78,7 @@ public class ConcurenceRunner {
 				};
 				ConcurenceRunner.run(task);
 			}
-			try {// µÈ´ýËùÓÐÏß³ÌÅÜÍê
+			try {// ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß³ï¿½ï¿½ï¿½ï¿½ï¿½
 				gate.await();
 			} catch (InterruptedException e) {
 				e.printStackTrace();

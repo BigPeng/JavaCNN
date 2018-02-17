@@ -1,14 +1,14 @@
 import java.io.IOException;
 
-import edu.hitsz.c102c.cnn.CNN;
-import edu.hitsz.c102c.cnn.CNN.LayerBuilder;
-import edu.hitsz.c102c.cnn.CNNLoader;
-import edu.hitsz.c102c.cnn.Layer;
-import edu.hitsz.c102c.cnn.Layer.Size;
-import edu.hitsz.c102c.dataset.Dataset;
-import edu.hitsz.c102c.dataset.DatasetLoader;
-import edu.hitsz.c102c.util.ConcurenceRunner;
-import edu.hitsz.c102c.util.TimedTest;
+import javacnn.cnn.CNN;
+import javacnn.cnn.CNN.LayerBuilder;
+import javacnn.cnn.CNNLoader;
+import javacnn.cnn.Layer;
+import javacnn.cnn.Layer.Size;
+import javacnn.dataset.Dataset;
+import javacnn.dataset.DatasetLoader;
+import javacnn.util.ConcurenceRunner;
+import javacnn.util.TimedTest;
 
 public class RunCNN {
 

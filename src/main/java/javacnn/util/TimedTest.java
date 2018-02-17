@@ -1,4 +1,4 @@
-package edu.hitsz.c102c.util;
+package javacnn.util;
 
 /**
  * ��ʱ�Ĳ��Թ���

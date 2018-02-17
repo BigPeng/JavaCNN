@@ -1,4 +1,4 @@
-package edu.hitsz.c102c.dataset;
+package javacnn.dataset;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

@@ -1,4 +1,4 @@
-package edu.hitsz.c102c.cnn;
+package javacnn.cnn;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

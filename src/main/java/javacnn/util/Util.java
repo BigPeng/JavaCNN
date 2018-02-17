@@ -1,27 +1,26 @@
-package edu.hitsz.c102c.util;
+package javacnn.util;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import edu.hitsz.c102c.cnn.Layer.Size;
-import edu.hitsz.c102c.util.TimedTest.TestTask;
+import javacnn.cnn.Layer.Size;
 
 public class Util {
 
 	/**
-	 * ¾ØÕó¶ÔÓ¦ÔªËØÏà³ËÊ±ÔÚÃ¿¸öÔªËØÉÏµÄ²Ù×÷
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦Ôªï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ã¿ï¿½ï¿½Ôªï¿½ï¿½ï¿½ÏµÄ²ï¿½ï¿½ï¿½
 	 * 
 	 * @author jiqunpeng
 	 * 
-	 *         ´´½¨Ê±¼ä£º2014-7-9 ÏÂÎç9:28:35
+	 *         ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£º2014-7-9 ï¿½ï¿½ï¿½ï¿½9:28:35
 	 */
 	public interface Operator extends Serializable {
 		public double process(double value);
 	}
 
-	// ¶¨ÒåÃ¿¸öÔªËØvalue¶¼½øÐÐ1-valueµÄ²Ù×÷
+	// ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½Ôªï¿½ï¿½valueï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1-valueï¿½Ä²ï¿½ï¿½ï¿½
 	public static final Operator one_value = new Operator() {
 		/**
 		 * 
@@ -34,7 +33,7 @@ public class Util {
 		}
 	};
 
-	// digmodº¯Êý
+	// digmodï¿½ï¿½ï¿½ï¿½
 	public static final Operator digmod = new Operator() {
 		/**
 		 * 
@@ -52,7 +51,7 @@ public class Util {
 	}
 
 	/**
-	 * ¶¨Òå¾ØÕó¶ÔÓ¦ÔªËØµÄ¼Ó·¨²Ù×÷
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦Ôªï¿½ØµÄ¼Ó·ï¿½ï¿½ï¿½ï¿½ï¿½
 	 */
 	public static final OperatorOnTwo plus = new OperatorOnTwo() {
 		/**
@@ -66,7 +65,7 @@ public class Util {
 		}
 	};
 	/**
-	 * ¶¨Òå¾ØÕó¶ÔÓ¦ÔªËØµÄ³Ë·¨²Ù×÷
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦Ôªï¿½ØµÄ³Ë·ï¿½ï¿½ï¿½ï¿½ï¿½
 	 */
 	public static OperatorOnTwo multiply = new OperatorOnTwo() {
 		/**
@@ -81,7 +80,7 @@ public class Util {
 	};
 
 	/**
-	 * ¶¨Òå¾ØÕó¶ÔÓ¦ÔªËØµÄ¼õ·¨²Ù×÷
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦Ôªï¿½ØµÄ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	 */
 	public static OperatorOnTwo minus = new OperatorOnTwo() {
 		/**
@@ -105,7 +104,7 @@ public class Util {
 	}
 
 	/**
-	 * ¶Ô¾ØÕó½øÐÐ180¶ÈÐý×ª,ÊÇÔÚmatrixµÄ¸±±¾ÉÏ¸´ÖÆ£¬²»»á¶ÔÔ­À´µÄ¾ØÕó½øÐÐÐÞ¸Ä
+	 * ï¿½Ô¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½180ï¿½ï¿½ï¿½ï¿½×ª,ï¿½ï¿½ï¿½ï¿½matrixï¿½Ä¸ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½Ä¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½
 	 * 
 	 * @param matrix
 	 */
@@ -113,7 +112,7 @@ public class Util {
 		matrix = cloneMatrix(matrix);
 		int m = matrix.length;
 		int n = matrix[0].length;
-		// °´ÁÐ¶Ô³Æ½øÐÐ½»»»
+		// ï¿½ï¿½ï¿½Ð¶Ô³Æ½ï¿½ï¿½Ð½ï¿½ï¿½ï¿½
 		for (int i = 0; i < m; i++) {
 			for (int j = 0; j < n / 2; j++) {
 				double tmp = matrix[i][j];
@@ -121,7 +120,7 @@ public class Util {
 				matrix[i][n - 1 - j] = tmp;
 			}
 		}
-		// °´ÐÐ¶Ô³Æ½øÐÐ½»»»
+		// ï¿½ï¿½ï¿½Ð¶Ô³Æ½ï¿½ï¿½Ð½ï¿½ï¿½ï¿½
 		for (int j = 0; j < n; j++) {
 			for (int i = 0; i < m / 2; i++) {
 				double tmp = matrix[i][j];
@@ -135,7 +134,7 @@ public class Util {
 	private static Random r = new Random(2);
 
 	/**
-	 * Ëæ»ú³õÊ¼»¯¾ØÕó
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	 * 
 	 * @param x
 	 * @param y
@@ -147,7 +146,7 @@ public class Util {
 		int tag = 1;
 		for (int i = 0; i < x; i++) {
 			for (int j = 0; j < y; j++) {
-				// Ëæ»úÖµÔÚ[-0.05,0.05)Ö®¼ä£¬ÈÃÈ¨ÖØ³õÊ¼»¯Öµ½ÏÐ¡£¬ÓÐÀûÓÚÓÚ±ÜÃâ¹ýÄâºÏ
+				// ï¿½ï¿½ï¿½Öµï¿½ï¿½[-0.05,0.05)Ö®ï¿½ä£¬ï¿½ï¿½È¨ï¿½Ø³ï¿½Ê¼ï¿½ï¿½Öµï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 				matrix[i][j] = (r.nextDouble() - 0.05) / 10;
 //				matrix[i][j] = tag * 0.5;
 //				if (b)
@@ -160,7 +159,7 @@ public class Util {
 	}
 
 	/**
-	 * Ëæ»ú³õÊ¼»¯Ò»Î¬ÏòÁ¿
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ò»Î¬ï¿½ï¿½ï¿½ï¿½
 	 * 
 	 * @param len
 	 * @return
@@ -175,7 +174,7 @@ public class Util {
 	}
 
 	/**
-	 * Ëæ»úÅÅÁÐµÄ³éÑù£¬Ëæ»ú³éÈ¡batchSize¸ö[0,size)µÄÊé
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÐµÄ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡batchSizeï¿½ï¿½[0,size)ï¿½ï¿½ï¿½ï¿½
 	 * 
 	 * @param size
 	 * @param batchSize
@@ -194,7 +193,7 @@ public class Util {
 	}
 
 	/**
-	 * ¸´ÖÆ¾ØÕó
+	 * ï¿½ï¿½ï¿½Æ¾ï¿½ï¿½ï¿½
 	 * 
 	 * @param matrix
 	 * @return
@@ -214,7 +213,7 @@ public class Util {
 	}
 
 	/**
-	 * ¶Ôµ¥¸ö¾ØÕó½øÐÐ²Ù×÷
+	 * ï¿½Ôµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð²ï¿½ï¿½ï¿½
 	 * 
 	 * @param ma
 	 * @param operator
@@ -233,15 +232,15 @@ public class Util {
 	}
 
 	/**
-	 * Á½¸öÎ¬¶ÈÏàÍ¬µÄ¾ØÕó¶ÔÓ¦ÔªËØ²Ù×÷,µÃµ½µÄ½á¹û·½·¨mbÖÐ£¬¼´mb[i][j] = (op_a
+	 * ï¿½ï¿½ï¿½ï¿½Î¬ï¿½ï¿½ï¿½ï¿½Í¬ï¿½Ä¾ï¿½ï¿½ï¿½ï¿½Ó¦Ôªï¿½Ø²ï¿½ï¿½ï¿½,ï¿½Ãµï¿½ï¿½Ä½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½mbï¿½Ð£ï¿½ï¿½ï¿½mb[i][j] = (op_a
 	 * ma[i][j]) op (op_b mb[i][j])
 	 * 
 	 * @param ma
 	 * @param mb
 	 * @param operatorB
-	 *            ÔÚµÚmb¾ØÕóÉÏµÄ²Ù×÷
+	 *            ï¿½Úµï¿½mbï¿½ï¿½ï¿½ï¿½ï¿½ÏµÄ²ï¿½ï¿½ï¿½
 	 * @param operatorA
-	 *            ÔÚma¾ØÕóÔªËØÉÏµÄ²Ù×÷
+	 *            ï¿½ï¿½maï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ÏµÄ²ï¿½ï¿½ï¿½
 	 * @return
 	 * 
 	 */
@@ -251,7 +250,7 @@ public class Util {
 		final int m = ma.length;
 		int n = ma[0].length;
 		if (m != mb.length || n != mb[0].length)
-			throw new RuntimeException("Á½¸ö¾ØÕó´óÐ¡²»Ò»ÖÂ ma.length:" + ma.length
+			throw new RuntimeException("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½Ò»ï¿½ï¿½ ma.length:" + ma.length
 					+ "  mb.length:" + mb.length);
 
 		for (int i = 0; i < m; i++) {
@@ -269,7 +268,7 @@ public class Util {
 	}
 
 	/**
-	 * ¿ËÂÞÄÚ¿Ë»ý,¶Ô¾ØÕó½øÐÐÀ©Õ¹
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿Ë»ï¿½,ï¿½Ô¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹
 	 * 
 	 * @param matrix
 	 * @param scale
@@ -293,7 +292,7 @@ public class Util {
 	}
 
 	/**
-	 * ¶Ô¾ØÕó½øÐÐ¾ùÖµËõÐ¡
+	 * ï¿½Ô¾ï¿½ï¿½ï¿½ï¿½ï¿½Ð¾ï¿½Öµï¿½ï¿½Ð¡
 	 * 
 	 * @param matrix
 	 * @param scaleSize
@@ -307,7 +306,7 @@ public class Util {
 		final int sn = n / scale.y;
 		final double[][] outMatrix = new double[sm][sn];
 		if (sm * scale.x != m || sn * scale.y != n)
-			throw new RuntimeException("scale²»ÄÜÕû³ýmatrix");
+			throw new RuntimeException("scaleï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½matrix");
 		final int size = scale.x * scale.y;
 		for (int i = 0; i < sm; i++) {
 			for (int j = 0; j < sn; j++) {
@@ -324,7 +323,7 @@ public class Util {
 	}
 
 	/**
-	 * ¼ÆËãfullÄ£Ê½µÄ¾í»ý
+	 * ï¿½ï¿½ï¿½ï¿½fullÄ£Ê½ï¿½Ä¾ï¿½ï¿½
 	 * 
 	 * @param matrix
 	 * @param kernel
@@ -336,7 +335,7 @@ public class Util {
 		int n = matrix[0].length;
 		final int km = kernel.length;
 		final int kn = kernel[0].length;
-		// À©Õ¹¾ØÕó
+		// ï¿½ï¿½Õ¹ï¿½ï¿½ï¿½ï¿½
 		final double[][] extendMatrix = new double[m + 2 * (km - 1)][n + 2
 				* (kn - 1)];
 		for (int i = 0; i < m; i++) {
@@ -347,7 +346,7 @@ public class Util {
 	}
 
 	/**
-	 * ¼ÆËãvalidÄ£Ê½µÄ¾í»ý
+	 * ï¿½ï¿½ï¿½ï¿½validÄ£Ê½ï¿½Ä¾ï¿½ï¿½
 	 * 
 	 * @param matrix
 	 * @param kernel
@@ -360,11 +359,11 @@ public class Util {
 		int n = matrix[0].length;
 		final int km = kernel.length;
 		final int kn = kernel[0].length;
-		// ÐèÒª×ö¾í»ýµÄÁÐÊý
+		// ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		int kns = n - kn + 1;
-		// ÐèÒª×ö¾í»ýµÄÐÐÊý
+		// ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		final int kms = m - km + 1;
-		// ½á¹û¾ØÕó
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		final double[][] outMatrix = new double[kms][kns];
 
 		for (int i = 0; i < kms; i++) {
@@ -383,7 +382,7 @@ public class Util {
 	}
 
 	/**
-	 * ÈýÎ¬¾ØÕóµÄ¾í»ý,ÕâÀïÒªÇóÁ½¸ö¾ØÕóµÄÒ»Î¬ÏàÍ¬
+	 * ï¿½ï¿½Î¬ï¿½ï¿½ï¿½ï¿½Ä¾ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»Î¬ï¿½ï¿½Í¬
 	 * 
 	 * @param matrix
 	 * @param kernel
@@ -401,8 +400,8 @@ public class Util {
 		int kns = n - kn + 1;
 		int khs = h - kh + 1;
 		if (matrix.length != kernel.length)
-			throw new RuntimeException("¾ØÕóÓë¾í»ýºËÔÚµÚÒ»Î¬ÉÏ²»Í¬");
-		// ½á¹û¾ØÕó
+			throw new RuntimeException("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½Ò»Î¬ï¿½Ï²ï¿½Í¬");
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		final double[][][] outMatrix = new double[kms][kns][khs];
 		for (int i = 0; i < kms; i++) {
 			for (int j = 0; j < kns; j++)
@@ -426,10 +425,10 @@ public class Util {
 	}
 
 	/**
-	 * ¶Ô¾ØÕóÔªËØÇóºÍ
+	 * ï¿½Ô¾ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½
 	 * 
 	 * @param error
-	 * @return ×¢ÒâÕâ¸öÇóºÍºÜ¿ÉÄÜ»áÒç³ö
+	 * @return ×¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÍºÜ¿ï¿½ï¿½Ü»ï¿½ï¿½ï¿½ï¿½
 	 */
 
 	public static double sum(double[][] error) {
@@ -445,7 +444,7 @@ public class Util {
 	}
 
 	/**
-	 * ¶Ôerrors[...][j]ÔªËØÇóºÍ
+	 * ï¿½ï¿½errors[...][j]Ôªï¿½ï¿½ï¿½ï¿½ï¿½
 	 * 
 	 * @param errors
 	 * @param j
@@ -482,7 +481,7 @@ public class Util {
 	}
 
 	/**
-	 * ²âÊÔ¾í»ý,²âÊÔ½á¹û£º4ºËÏÂ²¢·¢²¢ÐÐµÄ¾í»ýÌá¸ß²»µ½2±¶
+	 * ï¿½ï¿½ï¿½Ô¾ï¿½ï¿½,ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½ï¿½4ï¿½ï¿½ï¿½Â²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÐµÄ¾ï¿½ï¿½ï¿½ï¿½ß²ï¿½ï¿½ï¿½2ï¿½ï¿½
 	 */
 	private static void testConvn() {
 		int count = 1;
@@ -608,7 +607,7 @@ public class Util {
 	}
 
 	/**
-	 * È¡×î´óµÄÔªËØµÄÏÂ±ê
+	 * È¡ï¿½ï¿½ï¿½ï¿½Ôªï¿½Øµï¿½ï¿½Â±ï¿½
 	 * 
 	 * @param out
 	 * @return
