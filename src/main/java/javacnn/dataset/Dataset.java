@@ -42,7 +42,7 @@ public class Dataset {
 		records.add(new Record(attrs, label));
 	}
 
-	public Iterator<Record> iter() {
+	public Iterator<Record> iterator() {
 		return records.iterator();
 	}
 

@@ -7,12 +7,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javacnn.dataset.Dataset;
+import javacnn.util.ConcurenceRunner;
 import javacnn.util.Log;
 import javacnn.util.Util;
-import javacnn.util.ConcurenceRunner;
 
 public class CNN implements Serializable {
 
@@ -78,9 +77,7 @@ public class CNN implements Serializable {
 
 
 	public void train(final Dataset trainset, final int iterationCount) {
-		new Listener().start();
-
-		for (int iteration = 0; iteration < iterationCount && !stopTrain.get(); iteration++) {
+		for (int iteration = 0; iteration < iterationCount; iteration++) {
 
 			int epochsNum = trainset.size() / batchSize;
 
@@ -101,7 +98,7 @@ public class CNN implements Serializable {
 				Layer.prepareForNewBatch();
 
 				for (int index : randPerm) {
-					boolean isRight = train(trainset.getRecord(index));
+					final boolean isRight = train(trainset.getRecord(index));
 					if (isRight)
 						right++;
 					count++;
@@ -118,64 +115,33 @@ public class CNN implements Serializable {
 				}
 			}
 
-			final double p = 1.0 * right / count;
+			final double precision = ((double) right) / count;
 
-			if (iteration % 10 == 1 && p > 0.96) {
+			if (iteration % 10 == 1 && precision > 0.96) {
 				ALPHA = 0.001 + ALPHA * 0.9;
 				Log.info("Set alpha = " + ALPHA);
 			}
 
-			Log.info("precision " + right + "/" + count + "=" + p);
-		}
-	}
-
-	private static AtomicBoolean stopTrain;
-
-	static class Listener extends Thread {
-
-		Listener() {
-			setDaemon(true);
-			stopTrain = new AtomicBoolean(false);
-		}
-
-		@Override
-		public void run() {
-
-			System.out.println("Input & to stop train.");
-
-			while (true) {
-				try {
-					final int a = System.in.read();
-					if (a == '&') {
-						stopTrain.compareAndSet(false, true);
-						break;
-					}
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}
-
-			System.out.println("Listener stopped");
+			Log.info("precision " + right + "/" + count + "=" + precision);
 		}
 	}
 
 	public double test(final Dataset dataset) {
 		Layer.prepareForNewBatch();
 
-		final Iterator<Dataset.Record> iterator = dataset.iter();
+		final Iterator<Dataset.Record> iterator = dataset.iterator();
 
 		int right = 0;
 		while (iterator.hasNext()) {
 			final Dataset.Record record = iterator.next();
 
-			forward(record);
-
-			final double[] out = getOutput();
+			final double[] out = propagate(record);
 
 			if (record.getLabel().intValue() == Util.getMaxIndex(out)) {
 				right++;
 			}
 		}
+
 		double p = 1.0 * right / dataset.size();
 
 		Log.info("precision", p + "");
@@ -204,11 +170,10 @@ public class CNN implements Serializable {
 
 			Layer.prepareForNewBatch();
 
-			final Iterator<Dataset.Record> iter = testset.iter();
+			final Iterator<Dataset.Record> iter = testset.iterator();
 			while (iter.hasNext()) {
 				final Dataset.Record record = iter.next();
-				forward(record);
-				final double[] out = getOutput();
+				final double[] out = propagate(record);
 				// int label =
 				// Util.binaryArray2int(out);
 				final int label = Util.getMaxIndex(out);
@@ -375,7 +340,7 @@ public class CNN implements Serializable {
 		}.start();
 	}
 
-	private boolean setOutLayerErrors(Dataset.Record record) {
+	private boolean setOutLayerErrors(final Dataset.Record record) {
 
 		Layer outputLayer = layers.get(layerNum - 1);
 		int mapNum = outputLayer.getOutMapNum();
@@ -418,7 +383,13 @@ public class CNN implements Serializable {
 		return label == Util.getMaxIndex(outmaps);
 	}
 
-	private void forward(Dataset.Record record) {
+	public double[] propagate(final Dataset.Record record) {
+		forward(record);
+
+		return getOutput();
+	}
+
+	private void forward(final Dataset.Record record) {
 		setInLayerOutput(record);
 
 		for (int l = 1; l < layers.size(); l++) {
@@ -444,7 +415,7 @@ public class CNN implements Serializable {
 		}
 	}
 
-	private void setInLayerOutput(Dataset.Record record) {
+	private void setInLayerOutput(final Dataset.Record record) {
 		final Layer inputLayer = layers.get(0);
 		final Layer.Size mapSize = inputLayer.getMapSize();
 
