@@ -6,7 +6,7 @@
 
 	<groupId>javacnn</groupId>
 	<artifactId>javacnn</artifactId>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.2</version>
 
 	<description>Implementation of a CNN in Java</description>
 
