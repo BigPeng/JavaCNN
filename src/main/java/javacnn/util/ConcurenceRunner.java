@@ -16,12 +16,23 @@ import javacnn.cnn.Process;
 public class ConcurenceRunner implements Runner {
 
 	private final ExecutorService exec;
-	private final int cpuNum;
+	private final int threadCount;
 
+	/**
+	 * Starting ConcurrenceRunner with one thread for each CPU.
+	 */
 	public ConcurenceRunner() {
-		cpuNum = Runtime.getRuntime().availableProcessors();
-		System.out.println("cpuNum:" + cpuNum);
-		exec = Executors.newFixedThreadPool(cpuNum);
+		this(Runtime.getRuntime().availableProcessors());
+	}
+
+	/**
+	 * Starting ConcurenceRunner with the given count of threads.
+	 *
+	 * @param threadCount Threads to start (must be &gt; 0).
+	 */
+	public ConcurenceRunner(final int threadCount) {
+		this.threadCount = threadCount;
+		exec = Executors.newFixedThreadPool(this.threadCount);
 	}
 
 	public void shutdown() {
@@ -30,7 +41,7 @@ public class ConcurenceRunner implements Runner {
 
 	@Override
 	public void startProcess(final int mapNum, final Process process) {
-		final int runCpu = cpuNum < mapNum ? cpuNum : 1;
+		final int runCpu = threadCount < mapNum ? threadCount : 1;
 
 		// Fragment length rounded up
 		final CountDownLatch gate = new CountDownLatch(runCpu);
