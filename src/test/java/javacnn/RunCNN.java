@@ -30,7 +30,7 @@ public class RunCNN {
 
 			final String fileName = "src/test/dataset/train.format";
 			final Dataset dataset = DatasetLoader.load(fileName, ",", 784);
-			cnn.train(dataset, 1);
+			cnn.train(dataset, 3);
 
 			CNNLoader.saveModel("src/test/model.cnn", cnn);
 			dataset.clear();

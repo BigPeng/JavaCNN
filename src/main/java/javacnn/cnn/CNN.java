@@ -9,7 +9,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import javacnn.dataset.Dataset;
+import javacnn.util.DotProgressIndicator;
 import javacnn.util.Log;
+import javacnn.util.ProgressIndicator;
 import javacnn.util.Runner;
 import javacnn.util.Util;
 
@@ -31,6 +33,7 @@ public class CNN implements Serializable {
 
 	private transient Runner runner;
 
+	private ProgressIndicator progressIndicator = new DotProgressIndicator();
 
 	public CNN(LayerBuilder layerBuilder, final int batchSize, final Runner runner) {
 
@@ -76,6 +79,8 @@ public class CNN implements Serializable {
 		};
 	}
 
+	// === simple getters and setters ===
+
 	public void setRunner(final Runner runner) {
 		this.runner = runner;
 	}
@@ -85,14 +90,23 @@ public class CNN implements Serializable {
 		return runner;
 	}
 
+	public ProgressIndicator getProgressIndicator() {
+		return progressIndicator;
+	}
+
+	public void setProgressIndicator(final ProgressIndicator progressIndicator) {
+		this.progressIndicator = progressIndicator;
+	}
+
+	// === business logic ===
+
 	public void train(final Dataset trainset, final int iterationCount) {
 		for (int iteration = 0; iteration < iterationCount; iteration++) {
 
-			int epochsNum = trainset.size() / batchSize;
+			progressIndicator.start();
 
-			if (trainset.size() % batchSize != 0) {
-				epochsNum++; // Extract once, round up
-			}
+			// separate trainset in batches of batchsize ... and round up the result
+			final int epochsNum = (trainset.size() + batchSize - 1) / batchSize;
 
 			Log.info("");
 			Log.info(iteration + "th iter epochsNum:" + epochsNum);
@@ -108,8 +122,7 @@ public class CNN implements Serializable {
 
 				for (int index : randPerm) {
 					final boolean isRight = train(trainset.getRecord(index));
-					if (isRight)
-						right++;
+					if (isRight) right++;
 					count++;
 					Layer.prepareForNewRecord();
 				}
@@ -117,13 +130,10 @@ public class CNN implements Serializable {
 				// After finishing a batch update weight
 				updateParas();
 
-				if (epoch % 50 == 0) {
-					System.out.print(".");
-					if (epoch + 50 > epochsNum) {
-						System.out.println();
-					}
-				}
+				progressIndicator.progress();
 			}
+
+			progressIndicator.finished();
 
 			final double precision = ((double) right) / count;
 
@@ -370,6 +380,7 @@ public class CNN implements Serializable {
 	/**
 	 * Propagate given Record through the network.
 	 * Returns the result.
+	 *
 	 * @param record A Record
 	 * @return The result of the network
 	 */
