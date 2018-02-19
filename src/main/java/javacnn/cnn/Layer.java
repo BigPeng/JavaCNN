@@ -125,10 +125,12 @@ public class Layer implements Serializable {
 			this.y = y;
 		}
 
+		@Override
 		public String toString() {
-			StringBuilder s = new StringBuilder("Size(").append(" x = ")
-					.append(x).append(" y= ").append(y).append(")");
-			return s.toString();
+			return "Size{" +
+					"x=" + x +
+					", y=" + y +
+					'}';
 		}
 
 		/**
@@ -141,8 +143,10 @@ public class Layer implements Serializable {
 		public Size divide(Size scaleSize) {
 			int x = this.x / scaleSize.x;
 			int y = this.y / scaleSize.y;
-			if (x * scaleSize.x != this.x || y * scaleSize.y != this.y)
-				throw new RuntimeException(this + "��������" + scaleSize);
+			if (x * scaleSize.x != this.x || y * scaleSize.y != this.y) {
+				throw new RuntimeException(this + " can not be divisible " + scaleSize);
+			}
+
 			return new Size(x, y);
 		}
 

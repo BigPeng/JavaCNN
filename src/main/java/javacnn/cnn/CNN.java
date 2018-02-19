@@ -234,27 +234,28 @@ public class CNN implements Serializable {
 		final double[][][][] errors = layer.getErrors();
 		int mapNum = layer.getOutMapNum();
 
-		new ConcurenceRunner.TaskManager(mapNum) {
+		final Process processor =
+				new Process() {
+					@Override
+					public void process(int start, int end) {
+						for (int j = start; j < end; j++) {
+							final double[][] error = Util.sum(errors, j);
+							// update offset
+							final double deltaBias = Util.sum(error) / batchSize;
+							final double bias = layer.getBias(j) + ALPHA * deltaBias;
+							layer.setBias(j, bias);
+						}
+					}
+				};
 
-			@Override
-			public void process(int start, int end) {
-				for (int j = start; j < end; j++) {
-					double[][] error = Util.sum(errors, j);
-					// ����ƫ��
-					double deltaBias = Util.sum(error) / batchSize;
-					double bias = layer.getBias(j) + ALPHA * deltaBias;
-					layer.setBias(j, bias);
-				}
-			}
-		}.start();
-
+		ConcurenceRunner.startProcess(mapNum, processor);
 	}
 
 	private void updateKernels(final Layer layer, final Layer lastLayer) {
 		final int mapNum = layer.getOutMapNum();
 		final int lastMapNum = lastLayer.getOutMapNum();
-		new ConcurenceRunner.TaskManager(mapNum) {
 
+		final Process process = new Process() {
 			@Override
 			public void process(int start, int end) {
 				for (int j = start; j < end; j++) {
@@ -277,8 +278,9 @@ public class CNN implements Serializable {
 				}
 
 			}
-		}.start();
+		};
 
+		ConcurenceRunner.startProcess(mapNum, process);
 	}
 
 	private void setHiddenLayerErrors() {
@@ -301,8 +303,8 @@ public class CNN implements Serializable {
 	private void setSampErrors(final Layer layer, final Layer nextLayer) {
 		final int mapNum = layer.getOutMapNum();
 		final int nextMapNum = nextLayer.getOutMapNum();
-		new ConcurenceRunner.TaskManager(mapNum) {
 
+		final Process process = new Process() {
 			@Override
 			public void process(int start, int end) {
 				for (int i = start; i < end; i++) {
@@ -319,13 +321,15 @@ public class CNN implements Serializable {
 				}
 			}
 
-		}.start();
+		};
 
+		ConcurenceRunner.startProcess(mapNum, process);
 	}
 
 	private void setConvErrors(final Layer layer, final Layer nextLayer) {
 		final int mapNum = layer.getOutMapNum();
-		new ConcurenceRunner.TaskManager(mapNum) {
+
+		final Process process = new Process() {
 			@Override
 			public void process(int start, int end) {
 				for (int m = start; m < end; m++) {
@@ -337,7 +341,9 @@ public class CNN implements Serializable {
 					layer.setError(m, outMatrix);
 				}
 			}
-		}.start();
+		};
+
+		ConcurenceRunner.startProcess(mapNum, process);
 	}
 
 	private boolean setOutLayerErrors(final Dataset.Record record) {
@@ -438,8 +444,8 @@ public class CNN implements Serializable {
 	private void setConvOutput(final Layer layer, final Layer lastLayer) {
 		final int mapNum = layer.getOutMapNum();
 		final int lastMapNum = lastLayer.getOutMapNum();
-		new ConcurenceRunner.TaskManager(mapNum) {
 
+		final Process process = new Process() {
 			@Override
 			public void process(int start, int end) {
 				for (int j = start; j < end; j++) {
@@ -470,13 +476,15 @@ public class CNN implements Serializable {
 					layer.setMapValue(j, sum);
 				}
 			}
-		}.start();
+		};
+
+		ConcurenceRunner.startProcess(mapNum, process);
 	}
 
 	private void setSampOutput(final Layer layer, final Layer lastLayer) {
 		final int lastMapNum = lastLayer.getOutMapNum();
 
-		new ConcurenceRunner.TaskManager(lastMapNum) {
+		final Process process = new Process() {
 			@Override
 			public void process(int start, int end) {
 				for (int i = start; i < end; i++) {
@@ -486,8 +494,9 @@ public class CNN implements Serializable {
 					layer.setMapValue(i, sampMatrix);
 				}
 			}
-		}.start();
+		};
 
+		ConcurenceRunner.startProcess(lastMapNum, process);
 	}
 
 	private void setup(final int batchSize) {
