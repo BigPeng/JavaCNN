@@ -1,3 +1,5 @@
+package javacnn;
+
 import java.io.IOException;
 
 import javacnn.cnn.CNN;
@@ -26,11 +28,11 @@ public class RunCNN {
 
 			final CNN cnn = new CNN(builder, 50, concurenceRunner);
 
-			final String fileName = "dataset/train.format";
+			final String fileName = "src/test/dataset/train.format";
 			final Dataset dataset = DatasetLoader.load(fileName, ",", 784);
-			cnn.train(dataset, 5);
+			cnn.train(dataset, 1);
 
-			CNNLoader.saveModel("model.cnn", cnn);
+			CNNLoader.saveModel("src/test/model.cnn", cnn);
 			dataset.clear();
 
 			/*
@@ -38,8 +40,8 @@ public class RunCNN {
 			cnn.setRunner(concurenceRunner);
 			*/
 
-			final Dataset testset = DatasetLoader.load("dataset/test.format", ",", -1);
-			cnn.predict(testset, "dataset/test.predict");
+			final Dataset testset = DatasetLoader.load("src/test/dataset/test.format", ",", -1);
+			cnn.predict(testset, "src/test/dataset/test.predict");
 
 		} finally {
 			concurenceRunner.shutdown();
