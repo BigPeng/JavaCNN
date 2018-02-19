@@ -22,6 +22,8 @@ public class CNN implements Serializable {
 	private static double ALPHA = 0.85;
 
 
+	private final ConcurenceRunner concurenceRunner;
+
 	private final List<Layer> layers;
 
 	private final int layerNum;
@@ -35,10 +37,14 @@ public class CNN implements Serializable {
 	private final Util.Operator multiply_lambda;
 
 
-	public CNN(LayerBuilder layerBuilder, final int batchSize) {
+	public CNN(LayerBuilder layerBuilder, final int batchSize, final ConcurenceRunner concurenceRunner) {
+
 		this.layers = layerBuilder.mLayers;
 		this.layerNum = layers.size();
 		this.batchSize = batchSize;
+
+		this.concurenceRunner = concurenceRunner;
+
 		setup(batchSize);
 
 		// ---
@@ -248,7 +254,7 @@ public class CNN implements Serializable {
 					}
 				};
 
-		ConcurenceRunner.startProcess(mapNum, processor);
+		concurenceRunner.startProcess(mapNum, processor);
 	}
 
 	private void updateKernels(final Layer layer, final Layer lastLayer) {
@@ -280,7 +286,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		ConcurenceRunner.startProcess(mapNum, process);
+		concurenceRunner.startProcess(mapNum, process);
 	}
 
 	private void setHiddenLayerErrors() {
@@ -323,7 +329,7 @@ public class CNN implements Serializable {
 
 		};
 
-		ConcurenceRunner.startProcess(mapNum, process);
+		concurenceRunner.startProcess(mapNum, process);
 	}
 
 	private void setConvErrors(final Layer layer, final Layer nextLayer) {
@@ -343,7 +349,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		ConcurenceRunner.startProcess(mapNum, process);
+		concurenceRunner.startProcess(mapNum, process);
 	}
 
 	private boolean setOutLayerErrors(final Dataset.Record record) {
@@ -478,7 +484,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		ConcurenceRunner.startProcess(mapNum, process);
+		concurenceRunner.startProcess(mapNum, process);
 	}
 
 	private void setSampOutput(final Layer layer, final Layer lastLayer) {
@@ -496,7 +502,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		ConcurenceRunner.startProcess(lastMapNum, process);
+		concurenceRunner.startProcess(lastMapNum, process);
 	}
 
 	private void setup(final int batchSize) {

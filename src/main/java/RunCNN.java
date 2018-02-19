@@ -8,11 +8,12 @@ import javacnn.cnn.Layer.Size;
 import javacnn.dataset.Dataset;
 import javacnn.dataset.DatasetLoader;
 import javacnn.util.ConcurenceRunner;
-import javacnn.util.TimedTest;
 
 public class RunCNN {
 
-	public static void runCnn() throws IOException {
+	public static void main(String[] args) throws IOException {
+
+		final ConcurenceRunner concurenceRunner = new ConcurenceRunner();
 
 		final LayerBuilder builder = new LayerBuilder();
 
@@ -23,11 +24,11 @@ public class RunCNN {
 		builder.addLayer(Layer.buildSampLayer(new Size(2, 2)));
 		builder.addLayer(Layer.buildOutputLayer(10));
 
-		final CNN cnn = new CNN(builder, 50);
+		final CNN cnn = new CNN(builder, 50, concurenceRunner);
 
 		final String fileName = "dataset/train.format";
 		final Dataset dataset = DatasetLoader.load(fileName, ",", 784);
-		cnn.train(dataset, 100);
+		cnn.train(dataset, 5);
 
 		CNNLoader.saveModel("model.cnn", cnn);
 		dataset.clear();
@@ -35,17 +36,8 @@ public class RunCNN {
 		// CNN cnn = CNNLoader.loadModel(modelName);
 		final Dataset testset = DatasetLoader.load("dataset/test.format", ",", -1);
 		cnn.predict(testset, "dataset/test.predict");
-	}
 
-	public static void main(String[] args) {
-		new TimedTest(() -> {
-			try {
-				runCnn();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}, 1).test();
-		ConcurenceRunner.stop();
+		concurenceRunner.stop();
 	}
 
 }

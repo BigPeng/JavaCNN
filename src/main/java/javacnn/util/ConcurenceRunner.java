@@ -15,36 +15,36 @@ import javacnn.cnn.Process;
  */
 public class ConcurenceRunner {
 
-	private static final ExecutorService exec;
-	public static final int cpuNum;
+	private final ExecutorService exec;
+	private final int cpuNum;
 
-	static {
+	public ConcurenceRunner() {
 		cpuNum = Runtime.getRuntime().availableProcessors();
 		System.out.println("cpuNum:" + cpuNum);
 		exec = Executors.newFixedThreadPool(cpuNum);
 	}
 
-	public static void run(Runnable task) {
-		exec.execute(task);
-	}
-
-	public static void stop() {
+	public void stop() {
 		exec.shutdown();
 	}
 
-	public static void startProcess(final int mapNum, final Process process) {
+	public void startProcess(final int mapNum, final Process process) {
 		new TaskManager(mapNum).start(process);
 	}
 
+	private void run(Runnable task) {
+		exec.execute(task);
+	}
 
-	private static class TaskManager {
+
+	private class TaskManager {
 		private int workLength;
 
-		public TaskManager(int workLength) {
+		private TaskManager(int workLength) {
 			this.workLength = workLength;
 		}
 
-		public void start(final Process processor) {
+		private void start(final Process processor) {
 			int runCpu = cpuNum < workLength ? cpuNum : 1;
 
 			// Fragment length rounded up
@@ -66,7 +66,7 @@ public class ConcurenceRunner {
 					}
 				};
 
-				ConcurenceRunner.run(task);
+				ConcurenceRunner.this.run(task);
 			}
 			try {// Wait for all threads to finish running
 				gate.await();
