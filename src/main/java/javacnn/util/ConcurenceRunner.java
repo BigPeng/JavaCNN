@@ -13,7 +13,7 @@ import javacnn.cnn.Process;
  *
  * @author jiqunpeng
  */
-public class ConcurenceRunner {
+public class ConcurenceRunner implements Runner {
 
 	private final ExecutorService exec;
 	private final int cpuNum;
@@ -28,6 +28,7 @@ public class ConcurenceRunner {
 		exec.shutdown();
 	}
 
+	@Override
 	public void startProcess(final int mapNum, final Process process) {
 		new TaskManager(mapNum).start(process);
 	}

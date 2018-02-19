@@ -9,8 +9,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import javacnn.dataset.Dataset;
-import javacnn.util.ConcurenceRunner;
 import javacnn.util.Log;
+import javacnn.util.Runner;
 import javacnn.util.Util;
 
 public class CNN implements Serializable {
@@ -22,7 +22,7 @@ public class CNN implements Serializable {
 	private static double ALPHA = 0.85;
 
 
-	private final ConcurenceRunner concurenceRunner;
+	private final Runner runner;
 
 	private final List<Layer> layers;
 
@@ -37,13 +37,13 @@ public class CNN implements Serializable {
 	private final Util.Operator multiply_lambda;
 
 
-	public CNN(LayerBuilder layerBuilder, final int batchSize, final ConcurenceRunner concurenceRunner) {
+	public CNN(LayerBuilder layerBuilder, final int batchSize, final Runner runner) {
 
 		this.layers = layerBuilder.mLayers;
 		this.layerNum = layers.size();
 		this.batchSize = batchSize;
 
-		this.concurenceRunner = concurenceRunner;
+		this.runner = runner;
 
 		setup(batchSize);
 
@@ -254,7 +254,7 @@ public class CNN implements Serializable {
 					}
 				};
 
-		concurenceRunner.startProcess(mapNum, processor);
+		runner.startProcess(mapNum, processor);
 	}
 
 	private void updateKernels(final Layer layer, final Layer lastLayer) {
@@ -286,7 +286,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		concurenceRunner.startProcess(mapNum, process);
+		runner.startProcess(mapNum, process);
 	}
 
 	private void setHiddenLayerErrors() {
@@ -329,7 +329,7 @@ public class CNN implements Serializable {
 
 		};
 
-		concurenceRunner.startProcess(mapNum, process);
+		runner.startProcess(mapNum, process);
 	}
 
 	private void setConvErrors(final Layer layer, final Layer nextLayer) {
@@ -349,7 +349,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		concurenceRunner.startProcess(mapNum, process);
+		runner.startProcess(mapNum, process);
 	}
 
 	private boolean setOutLayerErrors(final Dataset.Record record) {
@@ -484,7 +484,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		concurenceRunner.startProcess(mapNum, process);
+		runner.startProcess(mapNum, process);
 	}
 
 	private void setSampOutput(final Layer layer, final Layer lastLayer) {
@@ -502,7 +502,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		concurenceRunner.startProcess(lastMapNum, process);
+		runner.startProcess(lastMapNum, process);
 	}
 
 	private void setup(final int batchSize) {
