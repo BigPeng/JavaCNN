@@ -15,26 +15,21 @@ import javacnn.util.Util;
 
 public class CNN implements Serializable {
 
-	private static final long serialVersionUID = 337920299147929932L;
+	private static final long serialVersionUID = 1L;
 
 	private static final double LAMBDA = 0;
-
 	private static double ALPHA = 0.85;
 
 
-	private final Runner runner;
-
 	private final List<Layer> layers;
-
 	private final int layerNum;
-
 	private final int batchSize;
 
 	private final Util.Operator divide_batchSize;
-
 	private final Util.Operator multiply_alpha;
-
 	private final Util.Operator multiply_lambda;
+
+	private transient Runner runner;
 
 
 	public CNN(LayerBuilder layerBuilder, final int batchSize, final Runner runner) {
@@ -81,6 +76,14 @@ public class CNN implements Serializable {
 		};
 	}
 
+	public void setRunner(final Runner runner) {
+		this.runner = runner;
+	}
+
+	private Runner getRunner() {
+		if (runner == null) throw new NullPointerException("'runner' is null.  Set runner before start training or test!");
+		return runner;
+	}
 
 	public void train(final Dataset trainset, final int iterationCount) {
 		for (int iteration = 0; iteration < iterationCount; iteration++) {
@@ -88,7 +91,7 @@ public class CNN implements Serializable {
 			int epochsNum = trainset.size() / batchSize;
 
 			if (trainset.size() % batchSize != 0) {
-				epochsNum++;
+				epochsNum++; // Extract once, round up
 			}
 
 			Log.info("");
@@ -111,6 +114,7 @@ public class CNN implements Serializable {
 					Layer.prepareForNewRecord();
 				}
 
+				// After finishing a batch update weight
 				updateParas();
 
 				if (epoch % 50 == 0) {
@@ -124,7 +128,7 @@ public class CNN implements Serializable {
 			final double precision = ((double) right) / count;
 
 			if (iteration % 10 == 1 && precision > 0.96) {
-				ALPHA = 0.001 + ALPHA * 0.9;
+				ALPHA = 0.001 + ALPHA * 0.9; // Adjust the quasi-learning rate dynamically
 				Log.info("Set alpha = " + ALPHA);
 			}
 
@@ -196,22 +200,10 @@ public class CNN implements Serializable {
 		Log.info("end predict");
 	}
 
-	private boolean isSame(double[] output, double[] target) {
-		boolean r = true;
-		for (int i = 0; i < output.length; i++)
-			if (Math.abs(output[i] - target[i]) > 0.5) {
-				r = false;
-				break;
-			}
-
-		return r;
-	}
-
 	private boolean train(Dataset.Record record) {
 		forward(record);
-		boolean result = backPropagation(record);
-		return result;
-		// System.exit(0);
+
+		return backPropagation(record);
 	}
 
 	private boolean backPropagation(Dataset.Record record) {
@@ -228,7 +220,7 @@ public class CNN implements Serializable {
 				case conv:
 				case output:
 					updateKernels(layer, lastLayer);
-					updateBias(layer, lastLayer);
+					updateBias(layer);
 					break;
 				default:
 					break;
@@ -236,7 +228,7 @@ public class CNN implements Serializable {
 		}
 	}
 
-	private void updateBias(final Layer layer, Layer lastLayer) {
+	private void updateBias(final Layer layer) {
 		final double[][][][] errors = layer.getErrors();
 		int mapNum = layer.getOutMapNum();
 
@@ -254,7 +246,7 @@ public class CNN implements Serializable {
 					}
 				};
 
-		runner.startProcess(mapNum, processor);
+		getRunner().startProcess(mapNum, processor);
 	}
 
 	private void updateKernels(final Layer layer, final Layer lastLayer) {
@@ -286,7 +278,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		runner.startProcess(mapNum, process);
+		getRunner().startProcess(mapNum, process);
 	}
 
 	private void setHiddenLayerErrors() {
@@ -329,7 +321,7 @@ public class CNN implements Serializable {
 
 		};
 
-		runner.startProcess(mapNum, process);
+		getRunner().startProcess(mapNum, process);
 	}
 
 	private void setConvErrors(final Layer layer, final Layer nextLayer) {
@@ -349,29 +341,13 @@ public class CNN implements Serializable {
 			}
 		};
 
-		runner.startProcess(mapNum, process);
+		getRunner().startProcess(mapNum, process);
 	}
 
 	private boolean setOutLayerErrors(final Dataset.Record record) {
 
-		Layer outputLayer = layers.get(layerNum - 1);
-		int mapNum = outputLayer.getOutMapNum();
-		// double[] target =
-		// record.getDoubleEncodeTarget(mapNum);
-		// double[] outmaps = new double[mapNum];
-		// for (int m = 0; m < mapNum; m++) {
-		// double[][] outmap = outputLayer.getMap(m);
-		// double output = outmap[0][0];
-		// outmaps[m] = output;
-		// double errors = output * (1 - output) *
-		// (target[m] - output);
-		// outputLayer.setError(m, 0, 0, errors);
-		// }
-		// // ��ȷ
-		// if (isSame(outmaps, target))
-		// return true;
-		// return false;
-
+		final Layer outputLayer = layers.get(layerNum - 1);
+		final int mapNum = outputLayer.getOutMapNum();
 		final double[] target = new double[mapNum];
 		final double[] outmaps = new double[mapNum];
 
@@ -384,10 +360,6 @@ public class CNN implements Serializable {
 
 		target[label] = 1;
 
-		// Log.i(record.getLable() + "outmaps:" +
-		// Util.fomart(outmaps)
-		// + Arrays.toString(target));
-
 		for (int m = 0; m < mapNum; m++) {
 			outputLayer.setError(m, 0, 0, outmaps[m] * (1 - outmaps[m]) * (target[m] - outmaps[m]));
 		}
@@ -395,6 +367,12 @@ public class CNN implements Serializable {
 		return label == Util.getMaxIndex(outmaps);
 	}
 
+	/**
+	 * Propagate given Record through the network.
+	 * Returns the result.
+	 * @param record A Record
+	 * @return The result of the network
+	 */
 	public double[] propagate(final Dataset.Record record) {
 		forward(record);
 
@@ -484,7 +462,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		runner.startProcess(mapNum, process);
+		getRunner().startProcess(mapNum, process);
 	}
 
 	private void setSampOutput(final Layer layer, final Layer lastLayer) {
@@ -502,7 +480,7 @@ public class CNN implements Serializable {
 			}
 		};
 
-		runner.startProcess(lastMapNum, process);
+		getRunner().startProcess(lastMapNum, process);
 	}
 
 	private void setup(final int batchSize) {

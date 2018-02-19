@@ -24,59 +24,41 @@ public class ConcurenceRunner implements Runner {
 		exec = Executors.newFixedThreadPool(cpuNum);
 	}
 
-	public void stop() {
+	public void shutdown() {
 		exec.shutdown();
 	}
 
 	@Override
 	public void startProcess(final int mapNum, final Process process) {
-		new TaskManager(mapNum).start(process);
-	}
+		final int runCpu = cpuNum < mapNum ? cpuNum : 1;
 
-	private void run(Runnable task) {
-		exec.execute(task);
-	}
+		// Fragment length rounded up
+		final CountDownLatch gate = new CountDownLatch(runCpu);
 
+		final int fregLength = (mapNum + runCpu - 1) / runCpu;
 
-	private class TaskManager {
-		private int workLength;
+		for (int cpu = 0; cpu < runCpu; cpu++) {
+			final int start = cpu * fregLength;
 
-		private TaskManager(int workLength) {
-			this.workLength = workLength;
+			final int tmp = (cpu + 1) * fregLength;
+			final int end = tmp <= mapNum ? tmp : mapNum;
+
+			final Runnable task = new Runnable() {
+				@Override
+				public void run() {
+					process.process(start, end);
+					gate.countDown();
+				}
+			};
+
+			exec.execute(task);
 		}
-
-		private void start(final Process processor) {
-			int runCpu = cpuNum < workLength ? cpuNum : 1;
-
-			// Fragment length rounded up
-			final CountDownLatch gate = new CountDownLatch(runCpu);
-
-			final int fregLength = (workLength + runCpu - 1) / runCpu;
-
-			for (int cpu = 0; cpu < runCpu; cpu++) {
-				final int start = cpu * fregLength;
-
-				final int tmp = (cpu + 1) * fregLength;
-				final int end = tmp <= workLength ? tmp : workLength;
-
-				final Runnable task = new Runnable() {
-					@Override
-					public void run() {
-						processor.process(start, end);
-						gate.countDown();
-					}
-				};
-
-				ConcurenceRunner.this.run(task);
-			}
-			try {// Wait for all threads to finish running
-				gate.await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				throw new RuntimeException(e);
-			}
+		try {// Wait for all threads to finish running
+			gate.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-
 	}
 
 }

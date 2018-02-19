@@ -1,43 +1,49 @@
 import java.io.IOException;
 
 import javacnn.cnn.CNN;
-import javacnn.cnn.CNN.LayerBuilder;
 import javacnn.cnn.CNNLoader;
 import javacnn.cnn.Layer;
-import javacnn.cnn.Layer.Size;
 import javacnn.dataset.Dataset;
 import javacnn.dataset.DatasetLoader;
 import javacnn.util.ConcurenceRunner;
 
 public class RunCNN {
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, ClassNotFoundException {
 
 		final ConcurenceRunner concurenceRunner = new ConcurenceRunner();
 
-		final LayerBuilder builder = new LayerBuilder();
+		try {
 
-		builder.addLayer(Layer.buildInputLayer(new Size(28, 28)));
-		builder.addLayer(Layer.buildConvLayer(6, new Size(5, 5)));
-		builder.addLayer(Layer.buildSampLayer(new Size(2, 2)));
-		builder.addLayer(Layer.buildConvLayer(12, new Size(5, 5)));
-		builder.addLayer(Layer.buildSampLayer(new Size(2, 2)));
-		builder.addLayer(Layer.buildOutputLayer(10));
+			final CNN.LayerBuilder builder = new CNN.LayerBuilder();
 
-		final CNN cnn = new CNN(builder, 50, concurenceRunner);
+			builder.addLayer(Layer.buildInputLayer(new Layer.Size(28, 28)));
+			builder.addLayer(Layer.buildConvLayer(6, new Layer.Size(5, 5)));
+			builder.addLayer(Layer.buildSampLayer(new Layer.Size(2, 2)));
+			builder.addLayer(Layer.buildConvLayer(12, new Layer.Size(5, 5)));
+			builder.addLayer(Layer.buildSampLayer(new Layer.Size(2, 2)));
+			builder.addLayer(Layer.buildOutputLayer(10));
 
-		final String fileName = "dataset/train.format";
-		final Dataset dataset = DatasetLoader.load(fileName, ",", 784);
-		cnn.train(dataset, 5);
+			final CNN cnn = new CNN(builder, 50, concurenceRunner);
 
-		CNNLoader.saveModel("model.cnn", cnn);
-		dataset.clear();
+			final String fileName = "dataset/train.format";
+			final Dataset dataset = DatasetLoader.load(fileName, ",", 784);
+			cnn.train(dataset, 5);
 
-		// CNN cnn = CNNLoader.loadModel(modelName);
-		final Dataset testset = DatasetLoader.load("dataset/test.format", ",", -1);
-		cnn.predict(testset, "dataset/test.predict");
+			CNNLoader.saveModel("model.cnn", cnn);
+			dataset.clear();
 
-		concurenceRunner.stop();
+			/*
+			final CNN cnn = CNNLoader.loadModel("model.cnn");
+			cnn.setRunner(concurenceRunner);
+			*/
+
+			final Dataset testset = DatasetLoader.load("dataset/test.format", ",", -1);
+			cnn.predict(testset, "dataset/test.predict");
+
+		} finally {
+			concurenceRunner.shutdown();
+		}
 	}
 
 }
