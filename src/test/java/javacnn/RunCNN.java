@@ -27,6 +27,7 @@ public class RunCNN {
 			builder.addLayer(Layer.buildOutputLayer(10));
 
 			final CNN cnn = new CNN(builder, 50, concurenceRunner);
+			// final CNN cnn = new CNN(builder, 50, new DirectRunner());
 
 			final String fileName = "src/test/dataset/train.format";
 			final Dataset dataset = DatasetLoader.load(fileName, ",", 784);
