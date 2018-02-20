@@ -64,7 +64,7 @@ public class Dataset {
 		private double[] attrs;
 		private Double label;
 
-		private Record(double[] attrs, Double label) {
+		public Record(double[] attrs, Double label) {
 			this.attrs = attrs;
 			this.label = label;
 		}
