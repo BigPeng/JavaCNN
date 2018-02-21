@@ -17,7 +17,7 @@ import javacnn.util.Util;
 
 public class CNN implements Serializable {
 
-	private static final long serialVersionUID = 3L;
+	private static final long serialVersionUID = 5L;
 
 	private static final double LAMBDA = 0;
 
@@ -108,7 +108,6 @@ public class CNN implements Serializable {
 			// separate trainset in batches of batchsize ... and round up the result
 			final int epochsNum = (trainset.size() + batchSize - 1) / batchSize;
 
-			Log.info("");
 			Log.info(iteration + "th iter epochsNum:" + epochsNum);
 
 			int right = 0;
