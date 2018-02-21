@@ -479,8 +479,8 @@ public class CNN implements Serializable {
 				for (int j = start; j < end; j++) {
 					double[][] sum = null;
 					for (int i = 0; i < lastMapNum; i++) {
-						double[][] lastMap = lastLayer.getMap(i);
-						double[][] kernel = layer.getKernel(i, j);
+						final double[][] lastMap = lastLayer.getMap(i);
+						final double[][] kernel = layer.getKernel(i, j);
 						if (sum == null) {
 							sum = Util.convnValid(lastMap, kernel);
 						} else {
