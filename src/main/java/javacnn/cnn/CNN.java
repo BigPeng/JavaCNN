@@ -17,11 +17,11 @@ import javacnn.util.Util;
 
 public class CNN implements Serializable {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 3L;
 
 	private static final double LAMBDA = 0;
-	private static double ALPHA = 0.85;
 
+	private double ALPHA = 0.85;
 
 	private final List<Layer> layers;
 	private final int layerNum;
@@ -33,11 +33,11 @@ public class CNN implements Serializable {
 
 	private transient Runner runner;
 
-	private ProgressIndicator progressIndicator = new DotProgressIndicator();
+	private transient ProgressIndicator progressIndicator = new DotProgressIndicator();
 
 	public CNN(LayerBuilder layerBuilder, final int batchSize, final Runner runner) {
 
-		this.layers = layerBuilder.mLayers;
+		this.layers = layerBuilder.layerList;
 		this.layerNum = layers.size();
 		this.batchSize = batchSize;
 
@@ -570,19 +570,19 @@ public class CNN implements Serializable {
 	// === inner classes ===
 
 	public static class LayerBuilder {
-		private List<Layer> mLayers;
+		private List<Layer> layerList;
 
 		public LayerBuilder() {
-			mLayers = new ArrayList<>();
+			layerList = new ArrayList<>();
 		}
 
 		public LayerBuilder(Layer layer) {
 			this();
-			mLayers.add(layer);
+			layerList.add(layer);
 		}
 
 		public LayerBuilder addLayer(Layer layer) {
-			mLayers.add(layer);
+			layerList.add(layer);
 			return this;
 		}
 	}

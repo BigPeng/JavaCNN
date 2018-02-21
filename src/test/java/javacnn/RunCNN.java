@@ -17,14 +17,14 @@ public class RunCNN {
 
 		try {
 
-			final CNN.LayerBuilder builder = new CNN.LayerBuilder();
-
-			builder.addLayer(Layer.buildInputLayer(new Layer.Size(28, 28)));
-			builder.addLayer(Layer.buildConvLayer(6, new Layer.Size(5, 5)));
-			builder.addLayer(Layer.buildSampLayer(new Layer.Size(2, 2)));
-			builder.addLayer(Layer.buildConvLayer(12, new Layer.Size(5, 5)));
-			builder.addLayer(Layer.buildSampLayer(new Layer.Size(2, 2)));
-			builder.addLayer(Layer.buildOutputLayer(10));
+			final CNN.LayerBuilder builder =
+					new CNN.LayerBuilder()
+							.addLayer(Layer.buildInputLayer(new Layer.Size(28, 28)))
+							.addLayer(Layer.buildConvLayer(6, new Layer.Size(5, 5)))
+							.addLayer(Layer.buildSampLayer(new Layer.Size(2, 2)))
+							.addLayer(Layer.buildConvLayer(12, new Layer.Size(5, 5)))
+							.addLayer(Layer.buildSampLayer(new Layer.Size(2, 2)))
+							.addLayer(Layer.buildOutputLayer(10));
 
 			final CNN cnn = new CNN(builder, 50, concurenceRunner);
 			// final CNN cnn = new CNN(builder, 50, new DirectRunner());
