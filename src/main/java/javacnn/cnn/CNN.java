@@ -379,6 +379,27 @@ public class CNN implements Serializable {
 
 	/**
 	 * Propagate given values through the network.
+	 * Returns the results.
+	 * For each input it returns the set of output values.
+	 *
+	 * @param inputs A list of vectors of input values
+	 * @return A list of results of the network corresponding to each input vector
+	 */
+	public double[][] propagate(final double[][] inputs) {
+		final double[][] results = new double[inputs.length][];
+
+		int index = 0;
+		for (final double[] input : inputs) {
+			final Dataset.Record record = new Dataset.Record(input, -1.);
+			results[index] = propagate(record);
+			index++;
+		}
+
+		return results;
+	}
+
+	/**
+	 * Propagate given values through the network.
 	 * Returns the result.
 	 *
 	 * @param inputs A vector of input values
