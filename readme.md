@@ -1,5 +1,10 @@
 # JavaCNN
-A Java implement of Convolutional Neural Network. Learn from DeepLearnToolbox(https://github.com/rasmusbergpalm/DeepLearnToolbox) more detail. see here(http://www.cnblogs.com/fengfenggirl/p/cnn_implement.html)
+
+A Java implement of Convolutional Neural Network.
+This is a fork of https://github.com/BigPeng/JavaCNN refactored for use in production.
+
+Original ideas are take from the DeepLearnToolbox (https://github.com/rasmusbergpalm/DeepLearnToolbox).
+
 ## Build a CNN
 
 	LayerBuilder builder = new LayerBuilder();
@@ -12,14 +17,14 @@ A Java implement of Convolutional Neural Network. Learn from DeepLearnToolbox(ht
 	CNN cnn = new CNN(builder, 50);
 	
 ## Run on MNIST dataset
-	
-	String fileName = "data/train.format";
-	Dataset dataset = Dataset.load(fileName, ",", 784);
-	cnn.train(dataset, 100);
-	Dataset testset = Dataset.load("data/test.format", ",", -1);
-	cnn.predict(testset, "data/test.predict");
 
-It takes a about an hour to complete 100 iteration and get a precison of 97.8%
+For running on MNIST dataset see project https://github.com/ratopi/javacnn.mnist.
 
-##Lisence
+## Source Code
+
+Get the source code from github:
+
+	git clone https://github.com/ratopi/JavaCNN.git 
+
+##License
 	MIT
