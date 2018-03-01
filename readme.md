@@ -1,9 +1,10 @@
 # JavaCNN
 
-A Java implement of Convolutional Neural Network.
+A Java implementation of Convolutional Neural Network.
 This is a fork of https://github.com/BigPeng/JavaCNN refactored for use in production.
 
 Original ideas are take from the DeepLearnToolbox (https://github.com/rasmusbergpalm/DeepLearnToolbox).
+
 
 ## Build a CNN
 
@@ -15,10 +16,12 @@ Original ideas are take from the DeepLearnToolbox (https://github.com/rasmusberg
 	builder.addLayer(Layer.buildSampLayer(new Size(2, 2)));
 	builder.addLayer(Layer.buildOutputLayer(10));
 	CNN cnn = new CNN(builder, 50);
-	
+
+
 ## Run on MNIST dataset
 
 For running on MNIST dataset see project https://github.com/ratopi/javacnn.mnist.
+
 
 ## Source Code
 
@@ -26,5 +29,7 @@ Get the source code from github:
 
 	git clone https://github.com/ratopi/JavaCNN.git 
 
-##License
-	MIT
+
+## License
+
+MIT
