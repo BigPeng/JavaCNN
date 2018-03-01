@@ -1,7 +1,7 @@
 # JavaCNN
 
 A Java implementation of Convolutional Neural Network.
-This is a fork of https://github.com/BigPeng/JavaCNN refactored for use in production.
+This is a mavenized fork of https://github.com/BigPeng/JavaCNN refactored for the intention to use it in productive environments.
 
 Original ideas are take from the DeepLearnToolbox (https://github.com/rasmusbergpalm/DeepLearnToolbox).
 
