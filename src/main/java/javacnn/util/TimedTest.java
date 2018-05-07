@@ -1,11 +1,11 @@
-package edu.hitsz.c102c.util;
+package javacnn.util;
 
 /**
- * ¼ÆÊ±µÄ²âÊÔ¹¤¾ß
+ * ï¿½ï¿½Ê±ï¿½Ä²ï¿½ï¿½Ô¹ï¿½ï¿½ï¿½
  * 
  * @author jiqunpeng
  * 
- *         ´´½¨Ê±¼ä£º2014-7-8 ÏÂÎç8:21:56
+ *         ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£º2014-7-8 ï¿½ï¿½ï¿½ï¿½8:21:56
  */
 public class TimedTest {
 	private int repeat;
@@ -26,6 +26,6 @@ public class TimedTest {
 			task.process();
 		}
 		double cost = (System.currentTimeMillis() - t) / 1000.0;
-		Log.i("cost ", cost + "s");
+		Log.info("cost ", cost + "s");
 	}
 }

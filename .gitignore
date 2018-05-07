@@ -1,5 +1,7 @@
-bin/
-*.class
-*MyTest.java
-data/
-model/
+*.iml
+/.idea
+/.classpath
+/.project
+/target/
+src/test/dataset/test.predict
+src/test/model.cnn

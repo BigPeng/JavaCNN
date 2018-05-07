@@ -1,5 +1,40 @@
 # JavaCNN
-A Java implement of Convolutional Neural Network. Learn from DeepLearnToolbox(https://github.com/rasmusbergpalm/DeepLearnToolbox) more detail. see here(http://www.cnblogs.com/fengfenggirl/p/cnn_implement.html)
+
+A Java implementation of Convolutional Neural Network.
+This is a mavenized fork of https://github.com/BigPeng/JavaCNN refactored for the intention to use it in productive environments.
+
+Original ideas are take from the DeepLearnToolbox (https://github.com/rasmusbergpalm/DeepLearnToolbox).
+
+
+## Include in your project
+
+If you use maven, it's simple: Just add the dependency 
+
+    <dependencies>
+
+	    <dependency>
+	        <groupId>javacnn</groupId>
+	        <artifactId>javacnn</artifactId>
+	        <version>0.4</version>
+	    </dependency>
+	   
+    </dependencies>
+
+and ratopi's repository 
+
+	<repositories>
+        <repository>
+            <id>ratopi.de releases</id>
+            <url>http://ratopi.github.io/maven/releases/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+to your project's pom.xml.
+
+
 ## Build a CNN
 
 	LayerBuilder builder = new LayerBuilder();
@@ -10,16 +45,20 @@ A Java implement of Convolutional Neural Network. Learn from DeepLearnToolbox(ht
 	builder.addLayer(Layer.buildSampLayer(new Size(2, 2)));
 	builder.addLayer(Layer.buildOutputLayer(10));
 	CNN cnn = new CNN(builder, 50);
-	
+
+
 ## Run on MNIST dataset
-	
-	String fileName = "data/train.format";
-	Dataset dataset = Dataset.load(fileName, ",", 784);
-	cnn.train(dataset, 100);
-	Dataset testset = Dataset.load("data/test.format", ",", -1);
-	cnn.predict(testset, "data/test.predict");
 
-It takes a about an hour to complete 100 iteration and get a precison of 97.8%
+For running on MNIST dataset see project https://github.com/ratopi/javacnn.mnist.
 
-##Lisence
-	MIT
+
+## Source Code
+
+Get the source code from github:
+
+	git clone https://github.com/ratopi/JavaCNN.git 
+
+
+## License
+
+MIT

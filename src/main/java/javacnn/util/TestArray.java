@@ -1,15 +1,15 @@
-package edu.hitsz.c102c.util;
+package javacnn.util;
 
 import java.util.Locale;
 
-import edu.hitsz.c102c.util.TimedTest.TestTask;
+import javacnn.util.TimedTest.TestTask;
 
 /**
- * ²âÊÔÔªËØÖ±½Ó·ÃÎÊÊı×éÓëÍ¨¹ıº¯Êı·ÃÎÊÊı×éµÄĞ§ÂÊ£¬ ½áÂÛ£ºº¯ÊıĞÎÊ½·ÃÎÊ²¢Ã»ÓĞ½µµÍËÙ¶È
+ * ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½Ö±ï¿½Ó·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ§ï¿½Ê£ï¿½ ï¿½ï¿½ï¿½Û£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½Ê²ï¿½Ã»ï¿½Ğ½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
  * 
  * @author jiqunpeng
  * 
- *         ´´½¨Ê±¼ä£º2014-7-9 ÏÂÎç3:18:30
+ *         ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£º2014-7-9 ï¿½ï¿½ï¿½ï¿½3:18:30
  */
 public class TestArray {
 	double[][] data;
@@ -35,7 +35,7 @@ public class TestArray {
 	}
 
 	public static void main(String[] args) {
-		String a = "aAdfaÅí_";
+		String a = "aAdfaï¿½ï¿½_";
 		System.out.println(a.toUpperCase(Locale.CHINA));
 		double[][] d = new double[3][];
 //		d[0] = new double[] { 1,2,3 };
